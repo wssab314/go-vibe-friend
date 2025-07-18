@@ -48,8 +48,8 @@
 
 | 技术                     | 用途                       |
 | ---------------------- | ------------------------ |
-| **SQLite**             | 默认内嵌数据库                  |
-| **PostgreSQL / MySQL** | 可选生产数据库                  |
+| **PostgreSQL**         | 默认主数据库                   |
+| **SQLite / MySQL**     | 可选替代数据库                  |
 | **Docker & Compose**   | 本地和生产容器化                 |
 | **GitHub Actions**     | CI / Lint / Test / Build |
 
@@ -120,7 +120,15 @@ cp .env.example .env
 # 编辑 .env，填入 OPENAI_API_KEY=your_key_here
 ```
 
-### 3. 一键启动开发环境
+### 3. 首次设置（推荐）
+
+```bash
+make setup
+```
+
+这会自动安装依赖并启动 PostgreSQL 数据库。
+
+### 4. 启动开发环境
 
 ```bash
 make dev
@@ -128,9 +136,9 @@ make dev
 
 * 后端：`http://localhost:8080`
 * Admin UI：`http://localhost:5173`
-* 默认使用 SQLite 文件 `data/dev.db`，首次运行自动迁移基础表。
+* 数据库：PostgreSQL (localhost:5432)，首次运行自动迁移基础表。
 
-### 4. 上传前端并生成后端
+### 5. 上传前端并生成后端
 
 1. 访问 Admin UI → **LLM Generate** 页面。
 2. 上传 Bolt/v0 导出的前端 `.zip` 与 `chat-history.json`。
@@ -156,13 +164,32 @@ graph TD
 
 | 命令             | 说明                     |
 | -------------- | ---------------------- |
+| `make setup`   | 首次设置开发环境（推荐）           |
 | `make dev`     | 热重载启动后端 & 前端           |
+| `make db-start`| 启动 PostgreSQL 数据库     |
+| `make db-stop` | 停止 PostgreSQL 数据库     |
 | `make migrate` | 执行所有数据库迁移              |
 | `make test`    | 运行后端单元测试               |
 | `make lint`    | GolangCI‑Lint + ESLint |
 | `make build`   | 构建二进制与前端产物             |
 
 > 完整脚本列表见 [`Makefile`](./Makefile)。
+
+### 🗄️ 数据库管理
+
+本项目使用 **PostgreSQL** 作为主数据库，通过 Docker Compose 管理。详细的数据库配置和使用说明请参考 [DATABASE.md](./DATABASE.md)。
+
+主要命令：
+- `make setup` - 首次设置，自动启动数据库
+- `make dev` - 启动开发环境，自动检查并启动数据库
+- `make db-start` - 单独启动数据库
+- `make db-stop` - 停止数据库
+- `make db-logs` - 查看数据库日志
+
+数据库连接信息：
+- **主机**: localhost:5432
+- **用户**: postgres/postgres
+- **数据库**: go_vibe_friend
 
 ---
 

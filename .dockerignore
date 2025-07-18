@@ -1,0 +1,32 @@
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Docker
+Dockerfile
+.dockerignore
+
+# IDE
+.idea
+.vscode
+
+# Frontend
+web/admin/node_modules
+web/admin/dist
+
+# Local data
+data/
+*.db
+*.db-journal
+
+# Env
+.env
+
+# Build artifacts
+bin/
+build/
+
+# OS specific
+.DS_Store
+Thumbs.db

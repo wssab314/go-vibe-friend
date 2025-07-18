@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f9fafb;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #111827;
+            margin-bottom: 20px;
+        }
+        .status {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .status::before {
+            content: "✅";
+            margin-right: 10px;
+        }
+        .test-result {
+            background: #f3f4f6;
+            padding: 15px;
+            border-radius: 4px;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Go Vibe Friend - Debug Test</h1>
+        <div class="status">Frontend server is running</div>
+        <div class="status">CSS is loading correctly</div>
+        <div class="status">HTML is rendering</div>
+        
+        <div class="test-result">
+            <h3>Test Results:</h3>
+            <p>If you can see this page, the basic web server is working.</p>
+            <p>Issue is likely with React rendering or JavaScript execution.</p>
+            
+            <div id="react-test">
+                <p>React not loaded yet...</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Basic JavaScript test
+        console.log("JavaScript is working");
+        
+        // Test if root element exists
+        const root = document.getElementById('root');
+        if (root) {
+            console.log("Root element found");
+        } else {
+            console.log("Root element NOT found");
+        }
+        
+        // Check for React in window
+        setTimeout(() => {
+            if (window.React) {
+                console.log("React is available");
+                document.getElementById('react-test').innerHTML = '<p style="color: green;">React is loaded!</p>';
+            } else {
+                console.log("React is NOT available");
+                document.getElementById('react-test').innerHTML = '<p style="color: red;">React is NOT loaded!</p>';
+            }
+        }, 1000);
+    </script>
+</body>
+</html>

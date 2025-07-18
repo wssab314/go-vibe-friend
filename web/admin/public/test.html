@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>React Debug Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: #f9fafb;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+        .success { background: #d1fae5; color: #065f46; }
+        .error { background: #fee2e2; color: #991b1b; }
+        .warning { background: #fef3c7; color: #92400e; }
+        pre {
+            background: #f3f4f6;
+            padding: 15px;
+            border-radius: 4px;
+            overflow-x: auto;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Go Vibe Friend - React Debug Test</h1>
+        
+        <div class="status success">
+            ✅ HTML is loading correctly
+        </div>
+        
+        <div class="status" id="js-status">
+            ⏳ Testing JavaScript...
+        </div>
+        
+        <div class="status" id="react-status">
+            ⏳ Testing React...
+        </div>
+        
+        <div class="status" id="dom-status">
+            ⏳ Testing DOM...
+        </div>
+        
+        <h2>Debug Information:</h2>
+        <pre id="debug-info">Loading...</pre>
+        
+        <h2>Console Errors:</h2>
+        <div id="console-errors">
+            <p>Check browser console for errors...</p>
+        </div>
+    </div>
+
+    <script>
+        // Test JavaScript
+        const jsStatus = document.getElementById('js-status');
+        const reactStatus = document.getElementById('react-status');
+        const domStatus = document.getElementById('dom-status');
+        const debugInfo = document.getElementById('debug-info');
+        
+        try {
+            jsStatus.className = 'status success';
+            jsStatus.textContent = '✅ JavaScript is working';
+            
+            // Test DOM
+            const root = document.getElementById('root');
+            if (root) {
+                domStatus.className = 'status success';
+                domStatus.textContent = '✅ Root element found';
+            } else {
+                domStatus.className = 'status error';
+                domStatus.textContent = '❌ Root element NOT found';
+            }
+            
+            // Debug info
+            const info = {
+                'User Agent': navigator.userAgent,
+                'Current URL': window.location.href,
+                'Root Element': root ? 'Found' : 'Not Found',
+                'Root Element HTML': root ? root.innerHTML : 'N/A',
+                'React in Window': window.React ? 'Yes' : 'No',
+                'ReactDOM in Window': window.ReactDOM ? 'Yes' : 'No'
+            };
+            
+            debugInfo.textContent = JSON.stringify(info, null, 2);
+            
+        } catch (error) {
+            jsStatus.className = 'status error';
+            jsStatus.textContent = '❌ JavaScript error: ' + error.message;
+        }
+        
+        // Test React after delay
+        setTimeout(() => {
+            try {
+                if (window.React) {
+                    reactStatus.className = 'status success';
+                    reactStatus.textContent = '✅ React is available';
+                } else {
+                    reactStatus.className = 'status warning';
+                    reactStatus.textContent = '⚠️ React is not available in window';
+                }
+                
+                // Update root element status
+                const root = document.getElementById('root');
+                if (root && root.innerHTML.trim()) {
+                    domStatus.textContent += ' (has content)';
+                } else if (root) {
+                    domStatus.textContent += ' (empty)';
+                }
+                
+            } catch (error) {
+                reactStatus.className = 'status error';
+                reactStatus.textContent = '❌ React test error: ' + error.message;
+            }
+        }, 2000);
+    </script>
+</body>
+</html>
