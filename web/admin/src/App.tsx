@@ -13,16 +13,16 @@ import {
   Activity,
   Server,
   HardDrive,
-  TrendingUp,
+  // TrendingUp,
   CheckCircle,
   XCircle,
   Clock,
   FileText,
-  Eye,
-  ChevronLeft,
-  ChevronRight,
+  // Eye,
+  // ChevronLeft,
+  // ChevronRight,
   Shield,
-  UserCheck,
+  // UserCheck,
   TestTubeDiagonal,
   RefreshCcw
 } from 'lucide-react';
@@ -394,7 +394,7 @@ const UsersList = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  // Auto-load data when component mounts
+  // Autoload data when component mounts
   useEffect(() => {
     fetchUsers();
   }, []);

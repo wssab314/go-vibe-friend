@@ -1,4 +1,4 @@
-.PHONY: help setup dev build docker-build test lint migrate db-start db-stop db-logs
+.PHONY: help setup dev build docker-build test testkit lint migrate db-start db-stop db-logs
 
 help:
 	@echo "Usage: make <command>"
@@ -79,6 +79,10 @@ docker-build:
 test:
 	@echo "Running Go tests..."
 	@go test ./...
+
+testkit:
+	@echo "Running TestKit (API & E2E)..."
+	@$(MAKE) -C testkit testkit
 
 lint:
 	@echo "Running Go linter..."
