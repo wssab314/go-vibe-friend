@@ -42,6 +42,10 @@ func (s *Service) IsConfigured() bool {
 	return s.client.IsConfigured()
 }
 
+func (s *Service) GetProviderName() string {
+	return s.client.GetProviderName()
+}
+
 func (s *Service) CreateGenerationJob(ctx context.Context, req *GenerationJobRequest) (*models.GenerationJob, error) {
 	// Create a new job record
 	job := &models.GenerationJob{
@@ -122,31 +126,10 @@ func (s *Service) GetJobStatus(jobID uint) (*models.GenerationJob, error) {
 
 func (s *Service) TestConnection(ctx context.Context) error {
 	if !s.client.IsConfigured() {
-		return fmt.Errorf("OpenAI API key is not configured")
+		return fmt.Errorf("LLM API key is not configured")
 	}
 
-	// Test with a simple request
-	req := &ChatRequest{
-		Model: "gpt-3.5-turbo",
-		Messages: []Message{
-			{
-				Role:    "user",
-				Content: "Hello, this is a test message. Please respond with 'Connection successful!'",
-			},
-		},
-		MaxTokens: 10,
-	}
-
-	resp, err := s.client.ChatCompletion(ctx, req)
-	if err != nil {
-		return fmt.Errorf("failed to test connection: %w", err)
-	}
-
-	if len(resp.Choices) == 0 {
-		return fmt.Errorf("no response from OpenAI")
-	}
-
-	return nil
+	return s.client.TestConnection(ctx)
 }
 
 func (s *Service) GenerateSimpleCode(ctx context.Context, prompt string) (string, error) {

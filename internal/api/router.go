@@ -5,6 +5,7 @@ import (
 
 	"go-vibe-friend/internal/api/admin"
 	"go-vibe-friend/internal/api/middleware"
+	"go-vibe-friend/internal/api/vf"
 	"go-vibe-friend/internal/config"
 	"go-vibe-friend/internal/llm"
 	"go-vibe-friend/internal/service"
@@ -24,15 +25,33 @@ func SetupRouter(db *store.Database, cfg *config.Config) *gin.Engine {
 	// Initialize stores and services
 	userStore := store.NewUserStore(db)
 	jobStore := store.NewJobStore(db)
-	authService := service.NewAuthService(userStore)
+	sessionStore := store.NewSessionStore(db)
+	profileStore := store.NewProfileStore(db)
+	fileStore := store.NewFileStore(db)
+	emailStore := store.NewEmailStore(db)
+	permissionStore := store.NewPermissionStore(db)
+	authService := service.NewAuthService(userStore, sessionStore)
+	profileService := service.NewProfileService(userStore, profileStore)
+	fileService := service.NewFileService(fileStore)
+	emailService := service.NewEmailService(emailStore, "", "", "", "", "", "")
+	permissionService := service.NewPermissionService(permissionStore, userStore)
 	llmService := llm.NewService(cfg, jobStore, userStore)
 	
 	// Initialize handlers
-	authHandler := admin.NewAuthHandler(authService)
+	adminAuthHandler := admin.NewAuthHandler(authService)
 	userHandler := admin.NewUserHandler(userStore)
 	jobHandler := admin.NewJobHandler(jobStore)
-	dashboardHandler := admin.NewDashboardHandler(userStore, jobStore)
+	dashboardHandler := admin.NewDashboardHandler(userStore, jobStore, db.DB)
 	llmHandler := admin.NewLLMHandler(llmService)
+	permissionHandler := admin.NewPermissionHandler(permissionService)
+	exportService := service.NewExportService(userStore, jobStore, fileStore, emailStore, permissionStore)
+	exportHandler := admin.NewExportHandler(exportService)
+	
+	// VF handlers
+	vfAuthHandler := vf.NewAuthHandler(authService)
+	vfProfileHandler := vf.NewProfileHandler(profileService)
+	vfFileHandler := vf.NewFileHandler(fileService)
+	vfEmailHandler := vf.NewEmailHandler(emailService, authService)
 
 	// Health check endpoint
 	r.GET("/health", func(c *gin.Context) {
@@ -49,15 +68,15 @@ func SetupRouter(db *store.Database, cfg *config.Config) *gin.Engine {
 		adminGroup := api.Group("/admin")
 		{
 			// Public auth routes
-			adminGroup.POST("/register", authHandler.Register)
-			adminGroup.POST("/login", authHandler.Login)
+			adminGroup.POST("/register", adminAuthHandler.Register)
+			adminGroup.POST("/login", adminAuthHandler.Login)
 			
 			// Protected routes
 			protected := adminGroup.Group("/")
 			protected.Use(middleware.AuthMiddleware())
 			{
 				// User management
-				protected.GET("/profile", authHandler.GetProfile)
+				protected.GET("/profile", adminAuthHandler.GetProfile)
 				protected.GET("/users", userHandler.ListUsers)
 				protected.GET("/users/:id", userHandler.GetUser)
 				protected.DELETE("/users/:id", userHandler.DeleteUser)
@@ -65,6 +84,14 @@ func SetupRouter(db *store.Database, cfg *config.Config) *gin.Engine {
 				// Dashboard
 				protected.GET("/dashboard/stats", dashboardHandler.GetStats)
 				protected.GET("/dashboard/system", dashboardHandler.GetSystemInfo)
+				
+				// System monitoring
+				protected.GET("/health", dashboardHandler.GetSystemHealth)
+				protected.GET("/database/capacity", dashboardHandler.GetDatabaseCapacity)
+				
+				// Data Explorer
+				protected.GET("/data-explorer/tables", dashboardHandler.GetDataExplorerTables)
+				protected.GET("/data-explorer/tables/:table/data", dashboardHandler.GetTableData)
 				
 				// Job management
 				protected.GET("/jobs", jobHandler.ListJobs)
@@ -81,6 +108,28 @@ func SetupRouter(db *store.Database, cfg *config.Config) *gin.Engine {
 				protected.POST("/llm/simple", llmHandler.SimpleGenerate)
 				protected.GET("/llm/jobs/:id", llmHandler.GetJobStatus)
 				
+				// Permission management
+				protected.GET("/permissions", permissionHandler.GetPermissions)
+				protected.POST("/permissions", permissionHandler.CreatePermission)
+				protected.GET("/permissions/resource/:resource", permissionHandler.GetPermissionsByResource)
+				protected.POST("/permissions/assign-role", permissionHandler.AssignPermissionToRole)
+				protected.POST("/permissions/remove-role", permissionHandler.RemovePermissionFromRole)
+				protected.GET("/permissions/roles/:id", permissionHandler.GetRolePermissions)
+				protected.GET("/permissions/users/:id", permissionHandler.GetUserPermissions)
+				protected.POST("/permissions/assign-user", permissionHandler.AssignPermissionToUser)
+				protected.POST("/permissions/remove-user", permissionHandler.RemovePermissionFromUser)
+				protected.GET("/permissions/stats", permissionHandler.GetPermissionStats)
+				protected.POST("/permissions/initialize", permissionHandler.InitializePermissions)
+				
+				// Data export
+				protected.POST("/export", exportHandler.ExportData)
+				protected.GET("/export/download/:filename", exportHandler.DownloadExport)
+				protected.GET("/export/users/:id", exportHandler.ExportUserData)
+				protected.GET("/export/system-report", exportHandler.ExportSystemReport)
+				protected.GET("/export/types", exportHandler.GetExportTypes)
+				protected.GET("/export/templates", exportHandler.GetExportTemplates)
+				protected.POST("/export/cleanup", exportHandler.CleanupExpiredExports)
+				
 				protected.GET("/ping", func(c *gin.Context) {
 					c.JSON(http.StatusOK, gin.H{
 						"message": "admin pong",
@@ -89,11 +138,54 @@ func SetupRouter(db *store.Database, cfg *config.Config) *gin.Engine {
 			}
 		}
 
-		// Vibe Friend routes
-		vf := api.Group("/vf")
+		// Vibe Friend routes (用户业务接口)
+		vf := api.Group("/vf/v1")
 		{
+			// 身份认证接口
+			authGroup := vf.Group("/auth")
+			{
+				authGroup.POST("/register", vfAuthHandler.Register)
+				authGroup.POST("/login", vfAuthHandler.Login)
+				authGroup.POST("/refresh", vfAuthHandler.Refresh)
+				authGroup.POST("/logout", vfAuthHandler.Logout)
+			}
+			
+			// 需要认证的接口
+			protected := vf.Group("/")
+			protected.Use(middleware.AuthMiddleware())
+			{
+				// 个人中心
+				protected.GET("/profile", vfProfileHandler.GetProfile)
+				protected.PUT("/profile", vfProfileHandler.UpdateProfile)
+				
+				// 公开的用户资料查看
+				protected.GET("/users/:id/profile", vfProfileHandler.GetUserProfile)
+				
+				// 文件管理
+				protected.POST("/files/upload", vfFileHandler.UploadFile)
+				protected.POST("/files/avatar", vfFileHandler.UploadAvatar)
+				protected.GET("/files", vfFileHandler.GetFiles)
+				protected.GET("/files/stats", vfFileHandler.GetFileStats)
+				protected.DELETE("/files/:id", vfFileHandler.DeleteFile)
+				
+				// 邮件管理
+				protected.POST("/email/send-verification", vfEmailHandler.SendVerificationEmail)
+				protected.GET("/email/status", vfEmailHandler.GetEmailStatus)
+				protected.GET("/email/logs", vfEmailHandler.GetEmailLogs)
+			}
+			
+			// 公开的文件下载接口（支持公开文件）
+			vf.GET("/files/:id/download", vfFileHandler.DownloadFile)
+			
+			// 公开的邮件接口
+			vf.GET("/email/verify", vfEmailHandler.VerifyEmail)
+			vf.POST("/email/request-reset", vfEmailHandler.RequestPasswordReset)
+			vf.POST("/email/reset-password", vfEmailHandler.ResetPassword)
+			
+			// 测试接口
 			vf.GET("/ping", func(c *gin.Context) {
 				c.JSON(http.StatusOK, gin.H{
+					"code":    0,
 					"message": "vf pong",
 				})
 			})

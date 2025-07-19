@@ -11,6 +11,7 @@ type Config struct {
 	Server   ServerConfig   `mapstructure:"server"`
 	Database DatabaseConfig `mapstructure:"database"`
 	OpenAI   OpenAIConfig   `mapstructure:"openai"`
+	Gemini   GeminiConfig   `mapstructure:"gemini"`
 }
 
 type ServerConfig struct {
@@ -34,6 +35,11 @@ type OpenAIConfig struct {
 	BaseURL string `mapstructure:"base_url"`
 }
 
+type GeminiConfig struct {
+	APIKey  string `mapstructure:"api_key"`
+	BaseURL string `mapstructure:"base_url"`
+}
+
 func Load() (*Config, error) {
 	viper.SetConfigName("config")
 	viper.SetConfigType("yaml")
@@ -51,6 +57,8 @@ func Load() (*Config, error) {
 	viper.SetDefault("database.password", "postgres")
 	viper.SetDefault("database.name", "go_vibe_friend")
 	viper.SetDefault("database.sslmode", "disable")
+	viper.SetDefault("openai.base_url", "https://api.openai.com/v1")
+	viper.SetDefault("gemini.base_url", "https://generativelanguage.googleapis.com/v1beta")
 
 	// Bind environment variables
 	viper.SetEnvPrefix("APP")
@@ -74,6 +82,8 @@ func Load() (*Config, error) {
 	viper.BindEnv("database.sslmode", "DB_SSLMODE")
 	viper.BindEnv("openai.api_key", "OPENAI_API_KEY")
 	viper.BindEnv("openai.base_url", "OPENAI_BASE_URL")
+	viper.BindEnv("gemini.api_key", "GEMINI_API_KEY")
+	viper.BindEnv("gemini.base_url", "GEMINI_BASE_URL")
 
 	var config Config
 	if err := viper.Unmarshal(&config); err != nil {

@@ -47,7 +47,7 @@ dev:
 		echo "⏳ Waiting for database to be ready..."; \
 		sleep 3; \
 	else \
-		echo "✅ PostgreSQL is already running"; \
+		echo "✅  PostgreSQL is already running"; \
 	fi
 	@echo "🔥 Starting backend server with Air (hot-reload)..."
 	@air & \

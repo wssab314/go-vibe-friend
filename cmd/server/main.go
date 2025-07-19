@@ -104,11 +104,16 @@ func createDefaultAdmin(db *store.Database) error {
 		Username: "admin",
 		Email:    "admin@example.com",
 		Password: string(hashedPassword),
-		Role:     "admin",
+		Status:   "active",
 	}
 	
 	if err := userStore.CreateUser(admin); err != nil {
 		return fmt.Errorf("failed to create admin user: %w", err)
+	}
+	
+	// Assign admin role
+	if err := userStore.AssignRole(admin.ID, "admin"); err != nil {
+		return fmt.Errorf("failed to assign admin role: %w", err)
 	}
 	
 	fmt.Println("✅ Default admin user created successfully")

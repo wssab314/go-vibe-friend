@@ -1,6 +1,7 @@
 package admin
 
 import (
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -35,11 +36,11 @@ type SimpleGenerateRequest struct {
 	Prompt string `json:"prompt" binding:"required"`
 }
 
-// TestConnection tests the OpenAI API connection
+// TestConnection tests the LLM API connection
 func (h *LLMHandler) TestConnection(c *gin.Context) {
 	if !h.llmService.IsConfigured() {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "OpenAI API key is not configured",
+			"error": "LLM API key is not configured",
 		})
 		return
 	}
@@ -47,14 +48,15 @@ func (h *LLMHandler) TestConnection(c *gin.Context) {
 	err := h.llmService.TestConnection(c.Request.Context())
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "Failed to connect to OpenAI: " + err.Error(),
+			"error": "Failed to connect to LLM API: " + err.Error(),
 		})
 		return
 	}
 
+	providerName := h.llmService.GetProviderName()
 	c.JSON(http.StatusOK, gin.H{
 		"success": true,
-		"message": "OpenAI API connection successful",
+		"message": fmt.Sprintf("%s API connection successful", providerName),
 	})
 }
 
@@ -147,7 +149,7 @@ func (h *LLMHandler) SimpleGenerate(c *gin.Context) {
 
 	if !h.llmService.IsConfigured() {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "OpenAI API key is not configured",
+			"error": "LLM API key is not configured",
 		})
 		return
 	}
@@ -170,6 +172,7 @@ func (h *LLMHandler) SimpleGenerate(c *gin.Context) {
 func (h *LLMHandler) GetConfig(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"configured": h.llmService.IsConfigured(),
+		"provider":   h.llmService.GetProviderName(),
 		"available":  true,
 	})
 }

@@ -58,7 +58,7 @@ func NewCodeGenerator(client *Client) *CodeGenerator {
 
 func (g *CodeGenerator) GenerateFromFrontend(ctx context.Context, req *GenerationRequest) (*GenerationResult, error) {
 	if !g.client.IsConfigured() {
-		return nil, fmt.Errorf("OpenAI API key is not configured")
+		return nil, fmt.Errorf("LLM API key is not configured")
 	}
 
 	// Build the system prompt
@@ -67,9 +67,14 @@ func (g *CodeGenerator) GenerateFromFrontend(ctx context.Context, req *Generatio
 	// Build the user prompt
 	userPrompt := g.buildUserPrompt(req)
 
-	// Create chat request
+	// Create chat request with appropriate model based on provider
+	model := "gpt-4-turbo-preview"
+	if g.client.GetProviderName() == "gemini" {
+		model = "gemini-1.5-flash"
+	}
+
 	chatReq := &ChatRequest{
-		Model: "gpt-4-turbo-preview",
+		Model: model,
 		Messages: []Message{
 			{Role: "system", Content: systemPrompt},
 			{Role: "user", Content: userPrompt},
@@ -85,7 +90,7 @@ func (g *CodeGenerator) GenerateFromFrontend(ctx context.Context, req *Generatio
 	}
 
 	if len(resp.Choices) == 0 {
-		return nil, fmt.Errorf("no response from OpenAI")
+		return nil, fmt.Errorf("no response from LLM")
 	}
 
 	// Parse the response
@@ -200,11 +205,17 @@ func (g *CodeGenerator) parseGenerationResponse(content string) (*GenerationResu
 
 func (g *CodeGenerator) GenerateAPI(ctx context.Context, prompt string) (string, error) {
 	if !g.client.IsConfigured() {
-		return "", fmt.Errorf("OpenAI API key is not configured")
+		return "", fmt.Errorf("LLM API key is not configured")
+	}
+
+	// Choose appropriate model based on provider
+	model := "gpt-3.5-turbo"
+	if g.client.GetProviderName() == "gemini" {
+		model = "gemini-1.5-flash"
 	}
 
 	chatReq := &ChatRequest{
-		Model: "gpt-3.5-turbo",
+		Model: model,
 		Messages: []Message{
 			{
 				Role: "system",
@@ -225,7 +236,7 @@ func (g *CodeGenerator) GenerateAPI(ctx context.Context, prompt string) (string,
 	}
 
 	if len(resp.Choices) == 0 {
-		return "", fmt.Errorf("no response from OpenAI")
+		return "", fmt.Errorf("no response from LLM")
 	}
 
 	return resp.Choices[0].Message.Content, nil

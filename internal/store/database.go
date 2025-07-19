@@ -56,7 +56,27 @@ func NewDatabase(cfg *config.Config) (*Database, error) {
 	}
 
 	// Auto-migrate models
-	if err := db.AutoMigrate(&models.User{}, &models.GenerationJob{}); err != nil {
+	if err := db.AutoMigrate(
+		&models.User{},
+		&models.Profile{},
+		&models.Role{},
+		&models.UserRole{},
+		&models.Session{},
+		&models.GenerationJob{},
+		&models.AuditLog{},
+		&models.Setting{},
+		&models.File{},
+		&models.FileUpload{},
+		&models.EmailTemplate{},
+		&models.EmailVerification{},
+		&models.PasswordReset{},
+		&models.EmailLog{},
+		&models.Permission{},
+		&models.RolePermission{},
+		&models.UserPermission{},
+		&models.ResourcePolicy{},
+		&models.APIRateLimit{},
+	); err != nil {
 		return nil, fmt.Errorf("failed to auto-migrate models: %w", err)
 	}
 
