@@ -21,7 +21,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({
   const { isCollapsed, setIsMobileOpen } = useSidebar();
 
   return (
-    <div className={`min-h-screen flex transition-colors duration-200 ${
+    <div className={`h-screen flex transition-colors duration-200 ${
       isDark ? 'bg-gray-900' : 'bg-gray-50 dark:bg-gray-700'
     }`}>
       <Sidebar
@@ -31,7 +31,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({
       />
       
       {/* Main content */}
-      <div className={`flex-1 transition-all duration-300 ease-in-out ${
+      <div className={`flex-1 flex flex-col transition-all duration-300 ease-in-out ${
         isCollapsed ? 'lg:ml-16' : 'lg:ml-64'
       }`}>
         {/* Mobile header */}
@@ -56,7 +56,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({
         </div>
 
         {/* Page content */}
-        <main className="p-6">
+        <main className="p-6 flex-1 min-h-0">
           {children}
         </main>
       </div>

@@ -327,15 +327,15 @@ const PermissionsManagementPage: React.FC = () => {
   }, [selectedRole]);
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
+    <div className="h-full flex flex-col space-y-6">
+      <div className="flex justify-between items-center flex-shrink-0">
         <h2 className={`text-2xl font-bold transition-colors duration-200 ${
           isDark ? 'text-white' : 'text-gray-900 dark:text-white'
         }`}>权限管理</h2>
       </div>
 
       {/* 标签页导航 */}
-      <div className={`border-b transition-colors duration-200 ${
+      <div className={`border-b transition-colors duration-200 flex-shrink-0 ${
         isDark ? 'border-gray-600' : 'border-gray-200 dark:border-gray-700'
       }`}>
         <nav className="-mb-px flex space-x-8">
@@ -363,7 +363,7 @@ const PermissionsManagementPage: React.FC = () => {
       </div>
 
       {error && (
-        <div className={`p-4 border rounded-lg transition-colors duration-200 ${
+        <div className={`p-4 border rounded-lg transition-colors duration-200 flex-shrink-0 ${
           isDark 
             ? 'bg-red-900/20 border-red-800 text-red-300' 
             : 'bg-red-50 border-red-200 text-red-800'
@@ -374,8 +374,8 @@ const PermissionsManagementPage: React.FC = () => {
 
       {/* 权限列表标签页 */}
       {activeTab === 'permissions' && (
-        <div className="space-y-4">
-          <div className="flex justify-between items-center">
+        <div className="flex flex-col space-y-4 flex-1 min-h-0">
+          <div className="flex justify-between items-center flex-shrink-0">
             <h3 className={`text-lg font-medium transition-colors duration-200 ${
               isDark ? 'text-white' : 'text-gray-900 dark:text-white'
             }`}>系统权限</h3>
@@ -404,7 +404,7 @@ const PermissionsManagementPage: React.FC = () => {
 
           {/* 新建权限表单 */}
           {showAddForm && (
-            <div className={`p-4 border rounded-lg transition-colors duration-200 ${
+            <div className={`p-4 border rounded-lg transition-colors duration-200 flex-shrink-0 ${
               isDark ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 dark:bg-gray-700 border-gray-200 dark:border-gray-700'
             }`}>
               <h4 className={`text-md font-medium mb-3 transition-colors duration-200 ${
@@ -503,13 +503,14 @@ const PermissionsManagementPage: React.FC = () => {
           )}
 
           {/* 权限列表 */}
-          <div className={`border rounded-lg overflow-hidden transition-colors duration-200 ${
+          <div className={`border rounded-lg overflow-hidden transition-colors duration-200 flex-1 flex flex-col min-h-0 ${
             isDark ? 'bg-gray-700 border-gray-600' : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700'
           }`}>
-            <table className={`min-w-full transition-colors duration-200 ${
-              isDark ? 'divide-y divide-gray-600' : 'divide-y divide-gray-200'
-            }`}>
-              <thead className={`transition-colors duration-200 ${
+            <div className="flex-1 overflow-auto">
+              <table className={`min-w-full transition-colors duration-200 ${
+                isDark ? 'divide-y divide-gray-600' : 'divide-y divide-gray-200'
+              }`}>
+              <thead className={`sticky top-0 z-10 transition-colors duration-200 ${
                 isDark ? 'bg-gray-600' : 'bg-gray-50 dark:bg-gray-700'
               }`}>
                 <tr>
@@ -573,7 +574,8 @@ const PermissionsManagementPage: React.FC = () => {
                   </tr>
                 ))}
               </tbody>
-            </table>
+              </table>
+            </div>
             {permissions.length === 0 && !loading && (
               <div className={`p-8 text-center transition-colors duration-200 ${
                 isDark ? 'text-gray-400' : 'text-gray-500 dark:text-gray-400'
@@ -587,8 +589,8 @@ const PermissionsManagementPage: React.FC = () => {
 
       {/* 用户权限标签页 */}
       {activeTab === 'user-permissions' && (
-        <div className="space-y-4">
-          <div className="flex justify-between items-center">
+        <div className="flex flex-col space-y-4 flex-1 min-h-0">
+          <div className="flex justify-between items-center flex-shrink-0">
             <h3 className={`text-lg font-medium transition-colors duration-200 ${
               isDark ? 'text-white' : 'text-gray-900'
             }`}>用户权限分配</h3>
@@ -600,19 +602,19 @@ const PermissionsManagementPage: React.FC = () => {
             </button>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 flex-1 min-h-0">
             {/* 用户列表 */}
-            <div className={`border rounded-lg transition-colors duration-200 ${
+            <div className={`border rounded-lg transition-colors duration-200 flex flex-col h-full ${
               isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
             }`}>
-              <div className={`px-4 py-3 border-b transition-colors duration-200 ${
+              <div className={`px-4 py-3 border-b transition-colors duration-200 flex-shrink-0 ${
                 isDark ? 'border-gray-700' : 'border-gray-200'
               }`}>
                 <h4 className={`font-medium transition-colors duration-200 ${
                   isDark ? 'text-white' : 'text-gray-900'
                 }`}>用户列表</h4>
               </div>
-              <div className="max-h-96 overflow-y-auto">
+              <div className="flex-1 overflow-y-auto">
                 {users.map((user) => (
                   <div
                     key={user.id}
@@ -648,10 +650,10 @@ const PermissionsManagementPage: React.FC = () => {
             </div>
 
             {/* 用户权限详情 */}
-            <div className={`border rounded-lg transition-colors duration-200 ${
+            <div className={`border rounded-lg transition-colors duration-200 flex flex-col h-full ${
               isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
             }`}>
-              <div className={`px-4 py-3 border-b transition-colors duration-200 ${
+              <div className={`px-4 py-3 border-b transition-colors duration-200 flex-shrink-0 ${
                 isDark ? 'border-gray-700' : 'border-gray-200'
               }`}>
                 <h4 className={`font-medium transition-colors duration-200 ${
@@ -660,7 +662,7 @@ const PermissionsManagementPage: React.FC = () => {
                   {selectedUser ? `用户权限 (ID: ${selectedUser})` : '选择用户查看权限'}
                 </h4>
               </div>
-              <div className="p-4">
+              <div className="p-4 flex-1 overflow-y-auto">
                 {selectedUser ? (
                   <div className="space-y-3">
                     {userPermissions.length > 0 ? (
@@ -702,8 +704,8 @@ const PermissionsManagementPage: React.FC = () => {
 
       {/* 角色管理标签页 */}
       {activeTab === 'roles' && (
-        <div className="space-y-4">
-          <div className="flex justify-between items-center">
+        <div className="flex flex-col space-y-4 flex-1 min-h-0">
+          <div className="flex justify-between items-center flex-shrink-0">
             <h3 className={`text-lg font-medium transition-colors duration-200 ${
               isDark ? 'text-white' : 'text-gray-900'
             }`}>角色管理</h3>
@@ -717,7 +719,7 @@ const PermissionsManagementPage: React.FC = () => {
 
           {/* 新建角色表单 */}
           {showRoleForm && (
-            <div className={`p-4 border rounded-lg transition-colors duration-200 ${
+            <div className={`p-4 border rounded-lg transition-colors duration-200 flex-shrink-0 ${
               isDark ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-200'
             }`}>
               <h4 className={`text-md font-medium mb-3 transition-colors duration-200 ${
@@ -778,19 +780,19 @@ const PermissionsManagementPage: React.FC = () => {
             </div>
           )}
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 flex-1 min-h-0">
             {/* 角色列表 */}
-            <div className={`border rounded-lg transition-colors duration-200 ${
+            <div className={`border rounded-lg transition-colors duration-200 flex flex-col h-full ${
               isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
             }`}>
-              <div className={`px-4 py-3 border-b transition-colors duration-200 ${
+              <div className={`px-4 py-3 border-b transition-colors duration-200 flex-shrink-0 ${
                 isDark ? 'border-gray-700' : 'border-gray-200'
               }`}>
                 <h4 className={`font-medium transition-colors duration-200 ${
                   isDark ? 'text-white' : 'text-gray-900'
                 }`}>角色列表</h4>
               </div>
-              <div className="max-h-96 overflow-y-auto">
+              <div className="flex-1 overflow-y-auto">
                 {roles.map((role) => (
                   <div key={role.id} className={`px-4 py-3 border-b cursor-pointer transition-colors duration-200 ${
                     isDark ? 'border-gray-600 hover:bg-gray-700' : 'border-gray-100 hover:bg-gray-50'
@@ -847,10 +849,10 @@ const PermissionsManagementPage: React.FC = () => {
             </div>
 
             {/* 角色权限详情 */}
-            <div className={`border rounded-lg transition-colors duration-200 ${
+            <div className={`border rounded-lg transition-colors duration-200 flex flex-col h-full ${
               isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
             }`}>
-              <div className={`px-4 py-3 border-b transition-colors duration-200 ${
+              <div className={`px-4 py-3 border-b transition-colors duration-200 flex-shrink-0 ${
                 isDark ? 'border-gray-700' : 'border-gray-200'
               }`}>
                 <div className="flex justify-between items-center">
@@ -871,7 +873,7 @@ const PermissionsManagementPage: React.FC = () => {
                   )}
                 </div>
               </div>
-              <div className="p-4">
+              <div className="p-4 flex-1 overflow-y-auto">
                 {selectedRole ? (
                   <div className="space-y-3">
                     {rolePermissions.length > 0 ? (
@@ -976,8 +978,8 @@ const PermissionsManagementPage: React.FC = () => {
 
       {/* 统计信息标签页 */}
       {activeTab === 'stats' && (
-        <div className="space-y-4">
-          <div className="flex justify-between items-center">
+        <div className="flex flex-col space-y-4 flex-1 min-h-0">
+          <div className="flex justify-between items-center flex-shrink-0">
             <h3 className={`text-lg font-medium transition-colors duration-200 ${
               isDark ? 'text-white' : 'text-gray-900'
             }`}>权限统计</h3>
@@ -989,8 +991,9 @@ const PermissionsManagementPage: React.FC = () => {
             </button>
           </div>
           
-          {stats ? (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="flex-1 min-h-0">
+            {stats ? (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 h-full">
               <div className={`border rounded-lg p-6 transition-colors duration-200 ${
                 isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
               }`}>
@@ -1054,16 +1057,17 @@ const PermissionsManagementPage: React.FC = () => {
                   </div>
                 </div>
               </div>
-            </div>
-          ) : (
-            <div className={`border rounded-lg p-8 text-center transition-colors duration-200 ${
-              isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
-            }`}>
-              <p className={`transition-colors duration-200 ${
-                isDark ? 'text-gray-400' : 'text-gray-500'
-              }`}>点击刷新统计获取数据</p>
-            </div>
-          )}
+              </div>
+            ) : (
+              <div className={`border rounded-lg p-8 text-center transition-colors duration-200 h-full flex items-center justify-center ${
+                isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
+              }`}>
+                <p className={`transition-colors duration-200 ${
+                  isDark ? 'text-gray-400' : 'text-gray-500'
+                }`}>点击刷新统计获取数据</p>
+              </div>
+            )}
+          </div>
         </div>
       )}
     </div>

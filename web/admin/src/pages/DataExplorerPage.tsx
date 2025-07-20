@@ -121,9 +121,9 @@ const DataExplorerPage: React.FC = () => {
   };
 
   return (
-    <div className="space-y-8">
+    <div className="h-full flex flex-col space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-4 sm:space-y-0">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-4 sm:space-y-0 flex-shrink-0">
         <div>
           <h2 className={`text-3xl font-bold transition-colors duration-200 ${
             isDark ? 'text-white' : 'text-gray-900 dark:text-white'
@@ -137,7 +137,7 @@ const DataExplorerPage: React.FC = () => {
       </div>
 
       {error && (
-        <div className={`p-4 border rounded-lg transition-colors duration-200 ${
+        <div className={`p-4 border rounded-lg transition-colors duration-200 flex-shrink-0 ${
           isDark 
             ? 'bg-red-900/50 border-red-700 text-red-300' 
             : 'bg-red-50 border-red-200 text-red-800'
@@ -146,12 +146,12 @@ const DataExplorerPage: React.FC = () => {
         </div>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 flex-1 min-h-0">
         {/* Tables List */}
-        <div className={`rounded-xl border transition-colors duration-200 ${
+        <div className={`rounded-xl border transition-colors duration-200 flex flex-col h-full ${
           isDark ? 'bg-gray-800 border-gray-700' : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700'
         }`}>
-          <div className="p-6 border-b border-gray-200 dark:border-gray-700 dark:border-gray-700">
+          <div className="p-6 border-b border-gray-200 dark:border-gray-700 dark:border-gray-700 flex-shrink-0">
             <h3 className={`text-lg font-semibold transition-colors duration-200 ${
               isDark ? 'text-white' : 'text-gray-900 dark:text-white'
             }`}>数据库表</h3>
@@ -160,7 +160,7 @@ const DataExplorerPage: React.FC = () => {
             }`}>共 {tables.length} 个表</p>
           </div>
           
-          <div className="p-6 space-y-3 max-h-96 overflow-y-auto">
+          <div className="p-6 space-y-3 flex-1 overflow-y-auto">
             {tables.map((table) => (
               <div
                 key={table.name}
@@ -203,10 +203,10 @@ const DataExplorerPage: React.FC = () => {
         </div>
 
         {/* Table Data */}
-        <div className={`lg:col-span-2 rounded-xl border transition-colors duration-200 ${
+        <div className={`lg:col-span-2 rounded-xl border transition-colors duration-200 flex flex-col h-full ${
           isDark ? 'bg-gray-800 border-gray-700' : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700'
         }`}>
-          <div className="p-6 border-b border-gray-200 dark:border-gray-700 dark:border-gray-700">
+          <div className="p-6 border-b border-gray-200 dark:border-gray-700 dark:border-gray-700 flex-shrink-0">
             <h3 className={`text-lg font-semibold transition-colors duration-200 ${
               isDark ? 'text-white' : 'text-gray-900 dark:text-white'
             }`}>
@@ -214,7 +214,7 @@ const DataExplorerPage: React.FC = () => {
             </h3>
           </div>
           
-          <div className="p-6">
+          <div className="p-6 flex-1 flex flex-col min-h-0">
             {!selectedTable ? (
               <div className="text-center py-12">
                 <Database className={`w-16 h-16 mb-4 mx-auto ${isDark ? 'text-gray-600' : 'text-gray-300'}`} />
@@ -232,8 +232,8 @@ const DataExplorerPage: React.FC = () => {
                 </div>
               </div>
             ) : (
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
+              <div className="flex flex-col space-y-4 flex-1 min-h-0">
+                <div className="flex items-center justify-between flex-shrink-0">
                   <span className={`text-sm transition-colors duration-200 ${
                     isDark ? 'text-gray-400' : 'text-gray-600'
                   }`}>
@@ -258,16 +258,18 @@ const DataExplorerPage: React.FC = () => {
                 </div>
                 
                 {tableData.length === 0 ? (
-                  <div className="text-center py-8">
+                  <div className="text-center py-8 flex-1 flex items-center justify-center">
                     <p className={`text-lg transition-colors duration-200 ${
                       isDark ? 'text-gray-400' : 'text-gray-600'
                     }`}>该表暂无数据</p>
                   </div>
                 ) : (
-                  <>
-                    <div className="overflow-x-auto">
+                  <div className="flex flex-col flex-1 min-h-0">
+                    <div className="flex-1 overflow-auto border rounded-lg">
                       <table className="min-w-full">
-                        <thead>
+                        <thead className={`sticky top-0 z-10 transition-colors duration-200 ${
+                          isDark ? 'bg-gray-800' : 'bg-white dark:bg-gray-800'
+                        }`}>
                           <tr className={`border-b transition-colors duration-200 ${
                             isDark ? 'border-gray-700' : 'border-gray-200 dark:border-gray-700'
                           }`}>
@@ -314,7 +316,7 @@ const DataExplorerPage: React.FC = () => {
 
                     {/* 分页控件 */}
                     {totalPages > 1 && (
-                      <div className="flex items-center justify-between">
+                      <div className="flex items-center justify-between mt-4 flex-shrink-0">
                         <div className={`text-sm transition-colors duration-200 ${
                           isDark ? 'text-gray-400' : 'text-gray-600'
                         }`}>
@@ -375,7 +377,7 @@ const DataExplorerPage: React.FC = () => {
                         </div>
                       </div>
                     )}
-                  </>
+                  </div>
                 )}
               </div>
             )}
