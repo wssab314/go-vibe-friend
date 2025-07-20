@@ -12,9 +12,10 @@ import (
 	"go-vibe-friend/internal/store"
 
 	"github.com/gin-gonic/gin"
+	"github.com/minio/minio-go/v7"
 )
 
-func SetupRouter(db *store.Database, cfg *config.Config) *gin.Engine {
+func SetupRouter(db *store.Database, cfg *config.Config, minioClient *minio.Client) *gin.Engine {
 	r := gin.New()
 
 	// Middleware
@@ -32,7 +33,7 @@ func SetupRouter(db *store.Database, cfg *config.Config) *gin.Engine {
 	permissionStore := store.NewPermissionStore(db)
 	authService := service.NewAuthService(userStore, sessionStore)
 	profileService := service.NewProfileService(userStore, profileStore)
-	fileService := service.NewFileService(fileStore)
+	fileService := service.NewFileService(fileStore, minioClient, cfg)
 	emailService := service.NewEmailService(emailStore, "", "", "", "", "", "")
 	permissionService := service.NewPermissionService(permissionStore, userStore)
 	llmService := llm.NewService(cfg, jobStore, userStore)
@@ -46,6 +47,8 @@ func SetupRouter(db *store.Database, cfg *config.Config) *gin.Engine {
 	permissionHandler := admin.NewPermissionHandler(permissionService)
 	exportService := service.NewExportService(userStore, jobStore, fileStore, emailStore, permissionStore)
 	exportHandler := admin.NewExportHandler(exportService)
+	storageService := service.NewStorageService(minioClient, cfg)
+	storageHandler := admin.NewStorageHandler(storageService)
 	
 	// VF handlers
 	vfAuthHandler := vf.NewAuthHandler(authService)
@@ -121,6 +124,16 @@ func SetupRouter(db *store.Database, cfg *config.Config) *gin.Engine {
 				protected.GET("/permissions/stats", permissionHandler.GetPermissionStats)
 				protected.POST("/permissions/initialize", permissionHandler.InitializePermissions)
 				
+				// Role management
+				protected.GET("/roles", permissionHandler.GetRoles)
+				protected.POST("/roles", permissionHandler.CreateRole)
+				protected.GET("/roles/:id", permissionHandler.GetRole)
+				protected.PUT("/roles/:id", permissionHandler.UpdateRole)
+				protected.DELETE("/roles/:id", permissionHandler.DeleteRole)
+				protected.POST("/roles/assign-user", permissionHandler.AssignRoleToUser)
+				protected.POST("/roles/remove-user", permissionHandler.RemoveRoleFromUser)
+				protected.GET("/roles/users/:id", permissionHandler.GetUserRoles)
+				
 				// Data export
 				protected.POST("/export", exportHandler.ExportData)
 				protected.GET("/export/download/:filename", exportHandler.DownloadExport)
@@ -130,6 +143,13 @@ func SetupRouter(db *store.Database, cfg *config.Config) *gin.Engine {
 				protected.GET("/export/templates", exportHandler.GetExportTemplates)
 				protected.POST("/export/cleanup", exportHandler.CleanupExpiredExports)
 				
+				// Storage management
+				protected.GET("/storage/objects", storageHandler.ListStorageObjects)
+				protected.GET("/storage/objects/download/*objectKey", storageHandler.DownloadStorageObject)
+				
+			// Public file access (for image preview)
+			adminGroup.GET("/storage/preview/*objectKey", storageHandler.DownloadStorageObject)
+
 				protected.GET("/ping", func(c *gin.Context) {
 					c.JSON(http.StatusOK, gin.H{
 						"message": "admin pong",

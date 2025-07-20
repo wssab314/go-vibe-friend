@@ -50,6 +50,7 @@
 | ---------------------- | ------------------------ |
 | **PostgreSQL**         | 默认主数据库                   |
 | **SQLite / MySQL**     | 可选替代数据库                  |
+| **MinIO**              | 对象存储服务（文件管理）             |
 | **Docker & Compose**   | 本地和生产容器化                 |
 | **GitHub Actions**     | CI / Lint / Test / Build |
 
@@ -137,6 +138,25 @@ make dev
 * 后端：`http://localhost:8080`
 * Admin UI：`http://localhost:5173`
 * 数据库：PostgreSQL (localhost:5432)，首次运行自动迁移基础表。
+* MinIO：`http://localhost:9000` (API) / `http://localhost:9001` (Console)
+
+### 可选：启动MinIO对象存储
+
+如需文件存储功能，可启动MinIO服务：
+
+```bash
+# 启动MinIO服务
+docker-compose -f docker-compose.minio.yml up -d
+
+# 查看MinIO状态
+docker-compose -f docker-compose.minio.yml ps
+```
+
+MinIO访问信息：
+- **API端点**: http://localhost:9000
+- **Web Console**: http://localhost:9001
+- **用户名**: minioadmin
+- **密码**: minioadmin123
 
 ### 5. 上传前端并生成后端
 

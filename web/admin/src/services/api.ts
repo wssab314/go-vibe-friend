@@ -1,10 +1,15 @@
-import axios, { AxiosInstance, AxiosRequestConfig } from 'axios';
-import { AuthResponse, LoginRequest, RegisterRequest, User } from '../types/auth';
+import axios from 'axios';
+import type { LoginRequest, RegisterRequest, User } from '../types/auth';
+
+interface AuthResponse {
+  token: string;
+  user: User;
+}
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
 
 class ApiService {
-  private client: AxiosInstance;
+  private client: ReturnType<typeof axios.create>;
 
   constructor() {
     this.client = axios.create({
@@ -31,10 +36,17 @@ class ApiService {
       (response) => response,
       (error) => {
         if (error.response?.status === 401) {
-          // Clear token on 401 error
-          localStorage.removeItem('token');
-          localStorage.removeItem('user');
-          window.location.href = '/login';
+          // Only clear auth data if it's not a login request
+          const isLoginRequest = error.config?.url?.includes('/login');
+          if (!isLoginRequest) {
+            console.log('401 error received, clearing auth data');
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            localStorage.removeItem('tokenExpiry');
+            
+            // Dispatch a custom event to notify AuthContext
+            window.dispatchEvent(new CustomEvent('auth:logout'));
+          }
         }
         return Promise.reject(error);
       }
@@ -64,8 +76,16 @@ class ApiService {
   }
 
   // Generic request method
-  async request<T>(config: AxiosRequestConfig): Promise<T> {
+  async request<T>(config: any): Promise<T> {
     const response = await this.client.request<T>(config);
+    return response.data;
+  }
+
+  // Storage endpoints
+  async getStorageObjects(prefix = '', recursive = true): Promise<any> {
+    const response = await this.client.get('/api/admin/storage/objects', {
+      params: { prefix, recursive },
+    });
     return response.data;
   }
 }

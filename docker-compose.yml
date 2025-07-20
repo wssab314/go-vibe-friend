@@ -20,8 +20,14 @@ services:
       - DB_NAME=go_vibe_friend
       - DB_SSLMODE=disable
       - OPENAI_API_KEY=${OPENAI_API_KEY} # Pass through from host
+      - MINIO_ENDPOINT=minio:9000
+      - MINIO_ACCESS_KEY_ID=minioadmin
+      - MINIO_SECRET_ACCESS_KEY=minioadmin
+      - MINIO_BUCKET_NAME=go-vibe-friend
+      - MINIO_USE_SSL=false
     depends_on:
       - db
+      - minio
     # The command can be overridden to use a hot-reload tool like Air
     # command: air -c .air.toml
 
@@ -36,5 +42,31 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
+  minio:
+    image: minio/minio:latest
+    ports:
+      - "9000:9000" # API port
+      - "9001:9001" # Console port
+    environment:
+      - MINIO_ROOT_USER=minioadmin
+      - MINIO_ROOT_PASSWORD=minioadmin
+    volumes:
+      - minio_data:/data
+    command: server /data --console-address ":9001"
+
+  createbuckets:
+    image: minio/mc
+    depends_on:
+      - minio
+    entrypoint: >
+      /bin/sh -c "
+      /usr/bin/mc config host add myminio http://minio:9000 minioadmin minioadmin;
+      /usr/bin/mc rm -r --force myminio/go-vibe-friend;
+      /usr/bin/mc mb myminio/go-vibe-friend;
+      /usr/bin/mc policy set public myminio/go-vibe-friend;
+      exit 0;
+      "
+
 volumes:
   postgres_data:
+  minio_data:

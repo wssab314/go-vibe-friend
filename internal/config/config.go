@@ -12,6 +12,7 @@ type Config struct {
 	Database DatabaseConfig `mapstructure:"database"`
 	OpenAI   OpenAIConfig   `mapstructure:"openai"`
 	Gemini   GeminiConfig   `mapstructure:"gemini"`
+	MinIO    MinIOConfig    `mapstructure:"minio"`
 }
 
 type ServerConfig struct {
@@ -40,6 +41,14 @@ type GeminiConfig struct {
 	BaseURL string `mapstructure:"base_url"`
 }
 
+type MinIOConfig struct {
+	Endpoint        string `mapstructure:"endpoint"`
+	AccessKeyID     string `mapstructure:"access_key_id"`
+	SecretAccessKey string `mapstructure:"secret_access_key"`
+	UseSSL          bool   `mapstructure:"use_ssl"`
+	BucketName      string `mapstructure:"bucket_name"`
+}
+
 func Load() (*Config, error) {
 	viper.SetConfigName("config")
 	viper.SetConfigType("yaml")
@@ -59,6 +68,11 @@ func Load() (*Config, error) {
 	viper.SetDefault("database.sslmode", "disable")
 	viper.SetDefault("openai.base_url", "https://api.openai.com/v1")
 	viper.SetDefault("gemini.base_url", "https://generativelanguage.googleapis.com/v1beta")
+	viper.SetDefault("minio.endpoint", "localhost:9000")
+	viper.SetDefault("minio.access_key_id", "minioadmin")
+	viper.SetDefault("minio.secret_access_key", "minioadmin123")
+	viper.SetDefault("minio.use_ssl", false)
+	viper.SetDefault("minio.bucket_name", "go-vibe-friend")
 
 	// Bind environment variables
 	viper.SetEnvPrefix("APP")
@@ -84,6 +98,11 @@ func Load() (*Config, error) {
 	viper.BindEnv("openai.base_url", "OPENAI_BASE_URL")
 	viper.BindEnv("gemini.api_key", "GEMINI_API_KEY")
 	viper.BindEnv("gemini.base_url", "GEMINI_BASE_URL")
+	viper.BindEnv("minio.endpoint", "MINIO_ENDPOINT")
+	viper.BindEnv("minio.access_key_id", "MINIO_ACCESS_KEY_ID")
+	viper.BindEnv("minio.secret_access_key", "MINIO_SECRET_ACCESS_KEY")
+	viper.BindEnv("minio.use_ssl", "MINIO_USE_SSL")
+	viper.BindEnv("minio.bucket_name", "MINIO_BUCKET_NAME")
 
 	var config Config
 	if err := viper.Unmarshal(&config); err != nil {

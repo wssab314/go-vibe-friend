@@ -16,6 +16,8 @@ import (
 	"go-vibe-friend/internal/utils"
 
 	"github.com/gin-gonic/gin"
+	"github.com/minio/minio-go/v7"
+	"github.com/minio/minio-go/v7/pkg/credentials"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -41,13 +43,23 @@ func main() {
 
 	logger.Info("Database connected successfully")
 
+	// Initialize MinIO client
+	minioClient, err := minio.New(cfg.MinIO.Endpoint, &minio.Options{
+		Creds:  credentials.NewStaticV4(cfg.MinIO.AccessKeyID, cfg.MinIO.SecretAccessKey, ""),
+		Secure: cfg.MinIO.UseSSL,
+	})
+	if err != nil {
+		logger.Fatal(fmt.Sprintf("Failed to initialize minio client: %v", err))
+	}
+	logger.Info("MinIO client initialized successfully")
+
 	// Create default admin user if not exists
 	if err := createDefaultAdmin(db); err != nil {
 		logger.Fatal(fmt.Sprintf("Failed to create default admin: %v", err))
 	}
 
 	// Setup router with database and config
-	router := api.SetupRouter(db, cfg)
+	router := api.SetupRouter(db, cfg, minioClient)
 
 	// Create HTTP server
 	server := &http.Server{
@@ -82,23 +94,23 @@ func main() {
 
 func createDefaultAdmin(db *store.Database) error {
 	userStore := store.NewUserStore(db)
-	
+
 	// Check if admin user already exists
 	existingAdmin, err := userStore.GetUserByEmail("admin@example.com")
 	if err != nil {
 		return fmt.Errorf("failed to check for existing admin: %w", err)
 	}
-	
+
 	if existingAdmin != nil {
 		return nil // Admin already exists
 	}
-	
+
 	// Hash the password
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte("admin123"), bcrypt.DefaultCost)
 	if err != nil {
 		return fmt.Errorf("failed to hash password: %w", err)
 	}
-	
+
 	// Create admin user
 	admin := &models.User{
 		Username: "admin",
@@ -106,19 +118,19 @@ func createDefaultAdmin(db *store.Database) error {
 		Password: string(hashedPassword),
 		Status:   "active",
 	}
-	
+
 	if err := userStore.CreateUser(admin); err != nil {
 		return fmt.Errorf("failed to create admin user: %w", err)
 	}
-	
+
 	// Assign admin role
 	if err := userStore.AssignRole(admin.ID, "admin"); err != nil {
 		return fmt.Errorf("failed to assign admin role: %w", err)
 	}
-	
+
 	fmt.Println("✅ Default admin user created successfully")
 	fmt.Println("📧 Email: admin@example.com")
 	fmt.Println("🔑 Password: admin123")
-	
+
 	return nil
 }

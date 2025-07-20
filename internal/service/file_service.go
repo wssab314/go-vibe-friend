@@ -1,30 +1,35 @@
 package service
 
 import (
+	"context"
 	"crypto/md5"
 	"fmt"
+	"go-vibe-friend/internal/config"
 	"io"
 	"mime/multipart"
-	"os"
 	"path/filepath"
 	"strings"
 	"time"
+
+	"github.com/minio/minio-go/v7"
 
 	"go-vibe-friend/internal/models"
 	"go-vibe-friend/internal/store"
 )
 
 type FileService struct {
-	fileStore   *store.FileStore
-	uploadPath  string
-	maxFileSize int64
+	fileStore    *store.FileStore
+	minioClient  *minio.Client
+	cfg          *config.Config
+	maxFileSize  int64
 	allowedMimes []string
 }
 
-func NewFileService(fileStore *store.FileStore) *FileService {
+func NewFileService(fileStore *store.FileStore, minioClient *minio.Client, cfg *config.Config) *FileService {
 	return &FileService{
 		fileStore:   fileStore,
-		uploadPath:  "uploads", // 可配置
+		minioClient: minioClient,
+		cfg:         cfg,
 		maxFileSize: 10 * 1024 * 1024, // 10MB
 		allowedMimes: []string{
 			"image/jpeg",
@@ -70,7 +75,10 @@ func (s *FileService) UploadFile(file *multipart.FileHeader, userID uint, catego
 	}
 
 	// 重置文件指针
-	src.Seek(0, 0)
+	_, err = src.Seek(0, 0)
+	if err != nil {
+		return nil, fmt.Errorf("重置文件指针失败: %v", err)
+	}
 
 	// 验证MIME类型
 	mimeType := file.Header.Get("Content-Type")
@@ -81,7 +89,7 @@ func (s *FileService) UploadFile(file *multipart.FileHeader, userID uint, catego
 	// 生成文件路径
 	now := time.Now()
 	fileName := fmt.Sprintf("%d_%s_%s", userID, now.Format("20060102150405"), fileHash)
-	
+
 	// 获取文件扩展名
 	ext := filepath.Ext(file.Filename)
 	if ext != "" {
@@ -90,31 +98,21 @@ func (s *FileService) UploadFile(file *multipart.FileHeader, userID uint, catego
 
 	// 创建目录结构
 	dateDir := now.Format("2006/01/02")
-	fullDir := filepath.Join(s.uploadPath, category, dateDir)
-	if err := os.MkdirAll(fullDir, 0755); err != nil {
-		return nil, fmt.Errorf("创建目录失败: %v", err)
-	}
+	objectName := filepath.Join(category, dateDir, fileName)
 
-	// 完整文件路径
-	filePath := filepath.Join(fullDir, fileName)
-
-	// 创建目标文件
-	dst, err := os.Create(filePath)
+	// 上传文件到 MinIO
+	_, err = s.minioClient.PutObject(context.Background(), s.cfg.MinIO.BucketName, objectName, src, file.Size, minio.PutObjectOptions{
+		ContentType: mimeType,
+	})
 	if err != nil {
-		return nil, fmt.Errorf("创建文件失败: %v", err)
-	}
-	defer dst.Close()
-
-	// 复制文件内容
-	if _, err := io.Copy(dst, src); err != nil {
-		return nil, fmt.Errorf("保存文件失败: %v", err)
+		return nil, fmt.Errorf("上传文件到 MinIO 失败: %v", err)
 	}
 
 	// 创建文件记录
 	fileModel := &models.File{
 		FileName:     fileName,
 		OriginalName: file.Filename,
-		FilePath:     filePath,
+		FilePath:     objectName,
 		FileSize:     file.Size,
 		MimeType:     mimeType,
 		FileHash:     fileHash,
@@ -126,7 +124,7 @@ func (s *FileService) UploadFile(file *multipart.FileHeader, userID uint, catego
 
 	if err := s.fileStore.CreateFile(fileModel); err != nil {
 		// 如果数据库保存失败，删除已上传的文件
-		os.Remove(filePath)
+		_ = s.minioClient.RemoveObject(context.Background(), s.cfg.MinIO.BucketName, objectName, minio.RemoveObjectOptions{})
 		return nil, fmt.Errorf("保存文件信息失败: %v", err)
 	}
 
@@ -149,6 +147,11 @@ func (s *FileService) GetFile(fileID uint, userID uint) (*models.File, error) {
 	}
 
 	return file, nil
+}
+
+// GetFileObject 获取文件对象
+func (s *FileService) GetFileObject(file *models.File) (*minio.Object, error) {
+	return s.minioClient.GetObject(context.Background(), s.cfg.MinIO.BucketName, file.FilePath, minio.GetObjectOptions{})
 }
 
 // DeleteFile 删除文件
@@ -217,4 +220,9 @@ func (s *FileService) RecordUpload(fileID, userID uint, ipAddress, userAgent str
 		Status:    "completed",
 	}
 	return s.fileStore.CreateFileUpload(upload)
+}
+
+// GetRecentUploads 获取最近的上传记录
+func (s *FileService) GetRecentUploads(userID uint, limit int) ([]models.FileUpload, error) {
+	return s.fileStore.GetRecentUploads(userID, limit)
 }

@@ -1,0 +1,130 @@
+version: '3.8'
+
+services:
+  # MinIO对象存储服务
+  minio:
+    image: bitnami/minio:latest
+    container_name: go-vibe-friend-minio
+    environment:
+      # MinIO管理员账号密码
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin123
+      # 设置默认区域
+      MINIO_DEFAULT_BUCKETS: go-vibe-friend
+      # Bitnami MinIO特定配置
+      MINIO_SKIP_CLIENT: "yes"
+    ports:
+      - "9000:9000"   # MinIO API服务端口
+      - "9001:9001"   # MinIO Web Console端口
+    volumes:
+      # 数据持久化存储
+      - minio_data:/data
+      # 配置文件（可选）
+      # - ./config/minio:/root/.minio
+    networks:
+      - go-vibe-friend-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "/opt/bitnami/minio/bin/minio", "admin", "info", "server", "http://localhost:9000", "--insecure"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+      start_period: 30s
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.minio-api.rule=Host(`minio.localhost`)"
+      - "traefik.http.routers.minio-api.service=minio-api"
+      - "traefik.http.services.minio-api.loadbalancer.server.port=9000"
+      - "traefik.http.routers.minio-console.rule=Host(`console.localhost`)"
+      - "traefik.http.routers.minio-console.service=minio-console"
+      - "traefik.http.services.minio-console.loadbalancer.server.port=9001"
+
+  # MinIO Client (mc) - 用于初始化和管理
+  minio-init:
+    image: minio/mc:latest
+    container_name: go-vibe-friend-minio-init
+    depends_on:
+      minio:
+        condition: service_healthy
+    environment:
+      - MINIO_ENDPOINT=minio:9000
+      - MINIO_ACCESS_KEY=minioadmin
+      - MINIO_SECRET_KEY=minioadmin123
+    networks:
+      - go-vibe-friend-network
+    entrypoint: >
+      /bin/sh -c "
+      echo 'Waiting for MinIO to be ready...';
+      until mc alias set local http://minio:9000 minioadmin minioadmin123; do
+        echo 'MinIO not ready, retrying in 5 seconds...';
+        sleep 5;
+      done;
+      echo 'MinIO is ready!';
+      
+      echo 'Creating bucket: go-vibe-friend';
+      mc mb local/go-vibe-friend --ignore-existing;
+      
+      echo 'Setting bucket policy to download for public files';
+      mc anonymous set download local/go-vibe-friend/avatar/;
+      
+      echo 'Creating additional buckets for different environments';
+      mc mb local/go-vibe-friend-dev --ignore-existing;
+      mc mb local/go-vibe-friend-test --ignore-existing;
+      
+      echo 'Setting up lifecycle policies';
+      cat > /tmp/lifecycle.json << EOF
+      {
+        \"Rules\": [
+          {
+            \"ID\": \"DeleteTempFiles\",
+            \"Status\": \"Enabled\",
+            \"Filter\": {
+              \"Prefix\": \"temp/\"
+            },
+            \"Expiration\": {
+              \"Days\": 7
+            }
+          }
+        ]
+      }
+      EOF
+      mc ilm import local/go-vibe-friend < /tmp/lifecycle.json;
+      
+      echo 'MinIO initialization completed!';
+      echo 'Access MinIO Console at: http://localhost:9001';
+      echo 'Username: minioadmin';
+      echo 'Password: minioadmin123';
+      "
+    restart: "no"
+
+  # 可选：Nginx反向代理（用于生产环境）
+  # nginx-minio:
+  #   image: nginx:alpine
+  #   container_name: go-vibe-friend-nginx-minio
+  #   ports:
+  #     - "80:80"
+  #     - "443:443"
+  #   volumes:
+  #     - ./config/nginx/minio.conf:/etc/nginx/conf.d/default.conf
+  #     - ./ssl:/etc/nginx/ssl
+  #   depends_on:
+  #     - minio
+  #   networks:
+  #     - go-vibe-friend-network
+  #   restart: unless-stopped
+
+volumes:
+  # MinIO数据持久化
+  minio_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ./data/minio
+
+networks:
+  go-vibe-friend-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16

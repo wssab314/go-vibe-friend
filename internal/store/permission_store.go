@@ -289,5 +289,113 @@ func (s *PermissionStore) GetPermissionStats() (map[string]interface{}, error) {
 	}
 	stats["user_permissions"] = userPermissionCount
 	
+	// 有权限的用户数
+	var usersWithPermissions int64
+	err = s.db.DB.Table("users").
+		Joins("LEFT JOIN user_roles ON users.id = user_roles.user_id").
+		Joins("LEFT JOIN user_permissions ON users.id = user_permissions.user_id").
+		Where("user_roles.id IS NOT NULL OR user_permissions.id IS NOT NULL").
+		Count(&usersWithPermissions).Error
+	if err != nil {
+		return nil, err
+	}
+	stats["users_with_permissions"] = usersWithPermissions
+	
+	// 总角色数
+	var totalRoles int64
+	err = s.db.DB.Model(&models.Role{}).Count(&totalRoles).Error
+	if err != nil {
+		return nil, err
+	}
+	stats["total_roles"] = totalRoles
+	
 	return stats, nil
+}
+
+// ===== 角色管理方法 =====
+
+// CreateRole 创建角色
+func (s *PermissionStore) CreateRole(role *models.Role) error {
+	return s.db.DB.Create(role).Error
+}
+
+// GetRoles 获取角色列表
+func (s *PermissionStore) GetRoles(limit, offset int) ([]models.Role, error) {
+	var roles []models.Role
+	err := s.db.DB.Order("created_at DESC").Limit(limit).Offset(offset).Find(&roles).Error
+	return roles, err
+}
+
+// GetRoleByID 根据ID获取角色
+func (s *PermissionStore) GetRoleByID(roleID uint) (*models.Role, error) {
+	var role models.Role
+	err := s.db.DB.First(&role, roleID).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, nil
+	}
+	return &role, err
+}
+
+// UpdateRole 更新角色
+func (s *PermissionStore) UpdateRole(role *models.Role) error {
+	return s.db.DB.Save(role).Error
+}
+
+// DeleteRole 删除角色
+func (s *PermissionStore) DeleteRole(roleID uint) error {
+	// 删除角色相关的权限关联
+	err := s.db.DB.Where("role_id = ?", roleID).Delete(&models.RolePermission{}).Error
+	if err != nil {
+		return err
+	}
+	
+	// 删除角色相关的用户关联
+	err = s.db.DB.Where("role_id = ?", roleID).Delete(&models.UserRole{}).Error
+	if err != nil {
+		return err
+	}
+	
+	// 删除角色
+	return s.db.DB.Delete(&models.Role{}, roleID).Error
+}
+
+// GetRoleUserCount 获取角色关联的用户数量
+func (s *PermissionStore) GetRoleUserCount(roleID uint) (int64, error) {
+	var count int64
+	err := s.db.DB.Model(&models.UserRole{}).Where("role_id = ?", roleID).Count(&count).Error
+	return count, err
+}
+
+// AssignRoleToUser 给用户分配角色
+func (s *PermissionStore) AssignRoleToUser(userID, roleID uint) error {
+	userRole := &models.UserRole{
+		UserID: userID,
+		RoleID: roleID,
+	}
+	return s.db.DB.Create(userRole).Error
+}
+
+// RemoveRoleFromUser 移除用户的角色
+func (s *PermissionStore) RemoveRoleFromUser(userID, roleID uint) error {
+	return s.db.DB.Where("user_id = ? AND role_id = ?", userID, roleID).
+		Delete(&models.UserRole{}).Error
+}
+
+// CheckUserHasRole 检查用户是否有指定角色
+func (s *PermissionStore) CheckUserHasRole(userID, roleID uint) (bool, error) {
+	var count int64
+	err := s.db.DB.Model(&models.UserRole{}).
+		Where("user_id = ? AND role_id = ?", userID, roleID).
+		Count(&count).Error
+	return count > 0, err
+}
+
+// GetUserRolesByID 根据用户ID获取用户的角色
+func (s *PermissionStore) GetUserRolesByID(userID uint) ([]models.Role, error) {
+	var roles []models.Role
+	err := s.db.DB.Table("roles").
+		Joins("JOIN user_roles ON roles.id = user_roles.role_id").
+		Where("user_roles.user_id = ? AND user_roles.deleted_at IS NULL", userID).
+		Find(&roles).Error
+	return roles, err
 }

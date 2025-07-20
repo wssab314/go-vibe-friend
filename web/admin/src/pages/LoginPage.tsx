@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -18,7 +17,6 @@ type LoginFormData = z.infer<typeof loginSchema>;
 const LoginPage: React.FC = () => {
   const [error, setError] = useState<string>('');
   const { login, isLoading } = useAuth();
-  const navigate = useNavigate();
 
   const {
     register,
@@ -32,9 +30,13 @@ const LoginPage: React.FC = () => {
     try {
       setError('');
       await login(data);
-      navigate('/dashboard');
+      // No need to navigate - AuthContext will handle authentication state
     } catch (err: any) {
-      setError(err.response?.data?.error || 'Login failed');
+      const errorMessage = err.response?.data?.error || err.message || 'Login failed';
+      setError(errorMessage);
+      
+      // Log error for debugging
+      console.error('Login error:', err);
     }
   };
 
@@ -93,13 +95,7 @@ const LoginPage: React.FC = () => {
 
             <div className="mt-4 text-center">
               <p className="text-sm text-gray-600">
-                Don't have an account?{' '}
-                <Link
-                  to="/register"
-                  className="font-medium text-blue-600 hover:text-blue-500"
-                >
-                  Sign up
-                </Link>
+                Demo credentials: admin@example.com / admin123
               </p>
             </div>
           </CardContent>

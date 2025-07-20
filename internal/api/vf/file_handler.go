@@ -1,8 +1,8 @@
 package vf
 
 import (
+	"io"
 	"net/http"
-	"path/filepath"
 	"strconv"
 
 	"go-vibe-friend/internal/service"
@@ -252,23 +252,31 @@ func (h *FileHandler) DownloadFile(c *gin.Context) {
 		return
 	}
 
-	// 检查文件是否存在
-	filePath := h.fileService.GetFilePath(file)
-	if _, err := filepath.Abs(filePath); err != nil {
+	// 从 MinIO 获取文件对象
+	obj, err := h.fileService.GetFileObject(file)
+	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{
 			"code":    1004,
 			"message": "文件不存在",
+			"error":   err.Error(),
 		})
 		return
 	}
+	defer obj.Close()
 
 	// 设置响应头
 	c.Header("Content-Type", file.MimeType)
 	c.Header("Content-Disposition", "attachment; filename=\""+file.OriginalName+"\"")
 	c.Header("Content-Length", strconv.FormatInt(file.FileSize, 10))
 
-	// 返回文件
-	c.File(filePath)
+	// 将文件内容写入响应体
+	if _, err := io.Copy(c.Writer, obj); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"code":    5000,
+			"message": "文件下载失败",
+		})
+		return
+	}
 }
 
 // DeleteFile 删除文件

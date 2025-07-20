@@ -232,3 +232,171 @@ func (s *PermissionService) GetUserRolePermissions(userID uint) (map[string][]mo
 
 	return rolePermissions, nil
 }
+
+// ===== 角色管理方法 =====
+
+// CreateRole 创建角色
+func (s *PermissionService) CreateRole(name, description string) (*models.Role, error) {
+	// 检查角色是否已存在
+	existing, err := s.permissionStore.GetRoleByName(name)
+	if err != nil {
+		return nil, fmt.Errorf("检查角色失败: %v", err)
+	}
+	if existing != nil {
+		return nil, fmt.Errorf("角色已存在: %s", name)
+	}
+
+	role := &models.Role{
+		Name:        name,
+		Description: description,
+	}
+
+	if err := s.permissionStore.CreateRole(role); err != nil {
+		return nil, fmt.Errorf("创建角色失败: %v", err)
+	}
+
+	return role, nil
+}
+
+// GetRoles 获取角色列表
+func (s *PermissionService) GetRoles(limit, offset int) ([]models.Role, error) {
+	return s.permissionStore.GetRoles(limit, offset)
+}
+
+// GetRole 获取单个角色详情
+func (s *PermissionService) GetRole(roleID uint) (*models.Role, error) {
+	return s.permissionStore.GetRoleByID(roleID)
+}
+
+// UpdateRole 更新角色
+func (s *PermissionService) UpdateRole(roleID uint, name, description string) (*models.Role, error) {
+	// 检查角色是否存在
+	role, err := s.permissionStore.GetRoleByID(roleID)
+	if err != nil {
+		return nil, fmt.Errorf("获取角色失败: %v", err)
+	}
+	if role == nil {
+		return nil, fmt.Errorf("角色不存在: %d", roleID)
+	}
+
+	// 如果名称改变，检查新名称是否已存在
+	if role.Name != name {
+		existing, err := s.permissionStore.GetRoleByName(name)
+		if err != nil {
+			return nil, fmt.Errorf("检查角色名称失败: %v", err)
+		}
+		if existing != nil && existing.ID != roleID {
+			return nil, fmt.Errorf("角色名称已存在: %s", name)
+		}
+	}
+
+	role.Name = name
+	role.Description = description
+
+	if err := s.permissionStore.UpdateRole(role); err != nil {
+		return nil, fmt.Errorf("更新角色失败: %v", err)
+	}
+
+	return role, nil
+}
+
+// DeleteRole 删除角色
+func (s *PermissionService) DeleteRole(roleID uint) error {
+	// 检查角色是否存在
+	role, err := s.permissionStore.GetRoleByID(roleID)
+	if err != nil {
+		return fmt.Errorf("获取角色失败: %v", err)
+	}
+	if role == nil {
+		return fmt.Errorf("角色不存在: %d", roleID)
+	}
+
+	// 检查是否有用户关联到这个角色
+	userCount, err := s.permissionStore.GetRoleUserCount(roleID)
+	if err != nil {
+		return fmt.Errorf("检查角色关联用户失败: %v", err)
+	}
+	if userCount > 0 {
+		return fmt.Errorf("无法删除角色，还有 %d 个用户关联到此角色", userCount)
+	}
+
+	return s.permissionStore.DeleteRole(roleID)
+}
+
+// AssignRoleToUser 给用户分配角色
+func (s *PermissionService) AssignRoleToUser(userID, roleID uint) error {
+	// 检查用户是否存在
+	user, err := s.userStore.GetUserByID(userID)
+	if err != nil {
+		return fmt.Errorf("获取用户失败: %v", err)
+	}
+	if user == nil {
+		return fmt.Errorf("用户不存在: %d", userID)
+	}
+
+	// 检查角色是否存在
+	role, err := s.permissionStore.GetRoleByID(roleID)
+	if err != nil {
+		return fmt.Errorf("获取角色失败: %v", err)
+	}
+	if role == nil {
+		return fmt.Errorf("角色不存在: %d", roleID)
+	}
+
+	// 检查用户是否已经有这个角色
+	hasRole, err := s.permissionStore.CheckUserHasRole(userID, roleID)
+	if err != nil {
+		return fmt.Errorf("检查用户角色失败: %v", err)
+	}
+	if hasRole {
+		return fmt.Errorf("用户已经拥有此角色")
+	}
+
+	return s.permissionStore.AssignRoleToUser(userID, roleID)
+}
+
+// RemoveRoleFromUser 移除用户的角色
+func (s *PermissionService) RemoveRoleFromUser(userID, roleID uint) error {
+	// 检查用户是否存在
+	user, err := s.userStore.GetUserByID(userID)
+	if err != nil {
+		return fmt.Errorf("获取用户失败: %v", err)
+	}
+	if user == nil {
+		return fmt.Errorf("用户不存在: %d", userID)
+	}
+
+	// 检查角色是否存在
+	role, err := s.permissionStore.GetRoleByID(roleID)
+	if err != nil {
+		return fmt.Errorf("获取角色失败: %v", err)
+	}
+	if role == nil {
+		return fmt.Errorf("角色不存在: %d", roleID)
+	}
+
+	// 检查用户是否有这个角色
+	hasRole, err := s.permissionStore.CheckUserHasRole(userID, roleID)
+	if err != nil {
+		return fmt.Errorf("检查用户角色失败: %v", err)
+	}
+	if !hasRole {
+		return fmt.Errorf("用户没有此角色")
+	}
+
+	return s.permissionStore.RemoveRoleFromUser(userID, roleID)
+}
+
+// GetUserRoles 获取用户的角色
+func (s *PermissionService) GetUserRoles(userID uint) ([]models.Role, error) {
+	// 检查用户是否存在
+	user, err := s.userStore.GetUserByID(userID)
+	if err != nil {
+		return nil, fmt.Errorf("获取用户失败: %v", err)
+	}
+	if user == nil {
+		return nil, fmt.Errorf("用户不存在: %d", userID)
+	}
+
+	return s.permissionStore.GetUserRolesByID(userID)
+}

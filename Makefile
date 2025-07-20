@@ -1,4 +1,4 @@
-.PHONY: help setup dev build docker-build test testkit lint migrate db-start db-stop db-logs
+.PHONY: help setup dev build docker-build test testkit lint migrate db-start db-stop db-logs minio-start minio-stop minio-logs minio-init
 
 help:
 	@echo "Usage: make <command>"
@@ -14,6 +14,10 @@ help:
 	@echo "  db-start      Start PostgreSQL database using Docker"
 	@echo "  db-stop       Stop PostgreSQL database"
 	@echo "  db-logs       View PostgreSQL database logs"
+	@echo "  minio-start   Start MinIO object storage service"
+	@echo "  minio-stop    Stop MinIO object storage service"
+	@echo "  minio-logs    View MinIO service logs"
+	@echo "  minio-init    Initialize MinIO with buckets and policies"
 
 # ==============================================================================
 # DEVELOPMENT
@@ -110,6 +114,34 @@ db-stop:
 db-logs:
 	@echo "Viewing PostgreSQL database logs..."
 	@docker-compose logs -f db
+
+# ==============================================================================
+# MINIO
+# ==============================================================================
+
+minio-start:
+	@echo "Starting MinIO object storage service..."
+	@docker-compose -f docker-compose.minio.yml up -d
+	@echo "⏳ Waiting for MinIO to be ready..."
+	@sleep 5
+	@echo "✅ MinIO started successfully!"
+	@echo "🌐 API Endpoint: http://localhost:9000"
+	@echo "🖥️  Web Console: http://localhost:9001"
+	@echo "👤 Username: minioadmin"
+	@echo "🔑 Password: minioadmin123"
+
+minio-stop:
+	@echo "Stopping MinIO object storage service..."
+	@docker-compose -f docker-compose.minio.yml down
+
+minio-logs:
+	@echo "Viewing MinIO service logs..."
+	@docker-compose -f docker-compose.minio.yml logs -f minio
+
+minio-init:
+	@echo "Initializing MinIO buckets and policies..."
+	@docker-compose -f docker-compose.minio.yml run --rm minio-init
+	@echo "✅ MinIO initialization completed!"
 
 # ==============================================================================
 # CLEANUP

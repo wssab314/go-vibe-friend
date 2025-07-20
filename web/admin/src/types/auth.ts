@@ -31,4 +31,5 @@ export interface AuthContextType {
   logout: () => void;
   isLoading: boolean;
   isAuthenticated: boolean;
+  checkAuthStatus: () => Promise<boolean>;
 }
