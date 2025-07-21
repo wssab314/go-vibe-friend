@@ -32,7 +32,6 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, onViewChange, onLogout }
     { id: 'users', label: '用户管理', icon: Users },
     { id: 'jobs', label: '任务管理', icon: Briefcase },
     { id: 'data-explorer', label: '数据浏览', icon: Database },
-    { id: 'llm', label: 'LLM', icon: Activity },
     { id: 'api-test', label: 'API测试', icon: TestTubeDiagonal },
     { id: 'permissions', label: '权限管理', icon: Shield },
     { id: 'minio-test', label: 'MinIO测试', icon: HardDrive },

@@ -62,7 +62,7 @@ func NewDatabase(cfg *config.Config) (*Database, error) {
 		&models.Role{},
 		&models.UserRole{},
 		&models.Session{},
-		&models.GenerationJob{},
+		&models.Job{},
 		&models.AuditLog{},
 		&models.Setting{},
 		&models.File{},

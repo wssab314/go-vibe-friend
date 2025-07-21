@@ -84,7 +84,7 @@ const ProfilePage: React.FC = () => {
           <div className="grid gap-4 md:grid-cols-3">
             <div className="text-center">
               <div className="text-2xl font-bold text-gray-900">0</div>
-              <div className="text-sm text-gray-600">Generation Jobs</div>
+              <div className="text-sm text-gray-600">API Calls</div>
             </div>
             
             <div className="text-center">

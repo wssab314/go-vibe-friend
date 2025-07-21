@@ -34,14 +34,19 @@ func main() {
 	// Set Gin mode
 	gin.SetMode(cfg.Server.Mode)
 
-	// Initialize database
-	db, err := store.NewDatabase(cfg)
+	// Initialize store (database + Redis)
+	storeManager, err := store.NewStore(cfg)
 	if err != nil {
-		logger.Fatal(fmt.Sprintf("Failed to connect to database: %v", err))
+		logger.Fatal(fmt.Sprintf("Failed to initialize store: %v", err))
 	}
-	defer db.Close()
+	defer storeManager.Close()
 
-	logger.Info("Database connected successfully")
+	logger.Info("Store initialized successfully")
+	if storeManager.IsRedisAvailable() {
+		logger.Info("Redis caching enabled")
+	} else {
+		logger.Info("Redis not available, using database fallback")
+	}
 
 	// Initialize MinIO client
 	minioClient, err := minio.New(cfg.MinIO.Endpoint, &minio.Options{
@@ -54,12 +59,12 @@ func main() {
 	logger.Info("MinIO client initialized successfully")
 
 	// Create default admin user if not exists
-	if err := createDefaultAdmin(db); err != nil {
+	if err := createDefaultAdmin(storeManager.DB); err != nil {
 		logger.Fatal(fmt.Sprintf("Failed to create default admin: %v", err))
 	}
 
-	// Setup router with database and config
-	router := api.SetupRouter(db, cfg, minioClient)
+	// Setup router with store and config
+	router := api.SetupRouter(storeManager, cfg, minioClient)
 
 	// Create HTTP server
 	server := &http.Server{

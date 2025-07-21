@@ -25,9 +25,14 @@ services:
       - MINIO_SECRET_ACCESS_KEY=minioadmin
       - MINIO_BUCKET_NAME=go-vibe-friend
       - MINIO_USE_SSL=false
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=
+      - REDIS_DB=0
     depends_on:
       - db
       - minio
+      - redis
     # The command can be overridden to use a hot-reload tool like Air
     # command: air -c .air.toml
 
@@ -54,6 +59,19 @@ services:
       - minio_data:/data
     command: server /data --console-address ":9001"
 
+  redis:
+    image: redis:6.0.10
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
   createbuckets:
     image: minio/mc
     depends_on:
@@ -70,3 +88,4 @@ services:
 volumes:
   postgres_data:
   minio_data:
+  redis_data:

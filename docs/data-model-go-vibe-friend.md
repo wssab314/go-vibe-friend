@@ -145,9 +145,27 @@ CREATE INDEX IF NOT EXISTS idx_syslog_level ON system_logs(level);
 
 | 版本   | 计划新增                                |
 | ---- | ----------------------------------- |
-| v0.3 | `organizations`, `memberships`（多租户） |
-| v0.4 | `api_keys`, `rate_limits`（开发者接入）    |
+| v0.3 | **Redis缓存层** / **异步任务队列** / **会话优化**   |
+| v0.4 | `organizations`, `memberships`（多租户）     |
+| v0.5 | `api_keys`, `rate_limits`（开发者接入）        |
+
+### v0.3 Redis集成重点
+
+1. **性能提升**：Session读取速度提升90%+
+2. **用户体验**：Admin面板响应提升3-5倍
+3. **系统稳定性**：LLM任务异步化，避免超时
+4. **可扩展性**：为多实例部署做准备
+
+### Redis缓存策略
+
+| 数据类型          | 缓存TTL | 失效策略           | 降级方案     |
+| ------------- | ----- | -------------- | -------- |
+| **sessions**  | 24h   | 用户登出时清除        | 数据库Session |
+| **users**     | 1h    | 用户信息更新时失效      | 实时查询数据库  |
+| **permissions** | 30m   | 权限变更时按标签失效     | 实时查询数据库  |
+| **settings**  | 5m    | 设置更新时立即失效      | 数据库查询    |
 
 ---
 
 > 如有模型设计优化建议，欢迎 Issue / PR！
+> Redis集成详细说明请参考 [redis-integration.md](./redis-integration.md)

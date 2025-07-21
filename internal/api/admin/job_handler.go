@@ -21,8 +21,9 @@ func NewJobHandler(jobStore *store.JobStore) *JobHandler {
 }
 
 type CreateJobRequest struct {
-	JobType   string `json:"job_type" binding:"required"`
-	InputData string `json:"input_data"`
+	Title       string `json:"title" binding:"required"`
+	Description string `json:"description"`
+	JobType     string `json:"job_type" binding:"required"`
 }
 
 func (h *JobHandler) CreateJob(c *gin.Context) {
@@ -38,11 +39,13 @@ func (h *JobHandler) CreateJob(c *gin.Context) {
 		return
 	}
 
-	job := &models.GenerationJob{
-		UserID:    userID.(uint),
-		Status:    "pending",
-		JobType:   req.JobType,
-		InputData: req.InputData,
+	job := &models.Job{
+		UserID:      userID.(uint),
+		Title:       req.Title,
+		Description: req.Description,
+		Status:      "pending",
+		JobType:     req.JobType,
+		Progress:    0,
 	}
 
 	if err := h.jobStore.CreateJob(job); err != nil {
@@ -71,7 +74,7 @@ func (h *JobHandler) ListJobs(c *gin.Context) {
 		return
 	}
 
-	var jobs []models.GenerationJob
+	var jobs []models.Job
 
 	if userIDStr != "" {
 		userID, err := strconv.ParseUint(userIDStr, 10, 32)
@@ -146,12 +149,9 @@ func (h *JobHandler) UpdateJob(c *gin.Context) {
 
 	// Update allowed fields
 	if status, ok := updateData["status"].(string); ok {
-		job.Status = status
+		job.Status = string(status)
 	}
-	if outputData, ok := updateData["output_data"].(string); ok {
-		job.OutputData = outputData
-	}
-	if errorMsg, ok := updateData["error_msg"].(string); ok {
+	if errorMsg, ok := updateData["error_message"].(string); ok {
 		job.ErrorMsg = errorMsg
 	}
 
@@ -188,32 +188,39 @@ func (h *JobHandler) CreateSampleJobs(c *gin.Context) {
 		return
 	}
 
-	sampleJobs := []models.GenerationJob{
+	sampleJobs := []models.Job{
 		{
-			UserID:    userID.(uint),
-			Status:    "completed",
-			JobType:   "frontend-analysis",
-			InputData: "React component analysis",
-			OutputData: "Generated API endpoints and models",
+			UserID:      userID.(uint),
+			Title:       "Data Export Task",
+			Description: "Exporting user data to CSV",
+			Status:      "completed",
+			JobType:     "data-export",
+			Progress:    100,
 		},
 		{
-			UserID:    userID.(uint),
-			Status:    "pending",
-			JobType:   "code-generation",
-			InputData: "Vue.js application upload",
+			UserID:      userID.(uint),
+			Title:       "Backup Creation",
+			Description: "Creating system backup",
+			Status:      "pending",
+			JobType:     "system-backup",
+			Progress:    0,
 		},
 		{
-			UserID:    userID.(uint),
-			Status:    "in_progress",
-			JobType:   "database-schema",
-			InputData: "Angular frontend analysis",
+			UserID:      userID.(uint),
+			Title:       "Email Campaign",
+			Description: "Sending newsletter to users",
+			Status:      "running",
+			JobType:     "email-campaign",
+			Progress:    45,
 		},
 		{
-			UserID:    userID.(uint),
-			Status:    "failed",
-			JobType:   "api-generation",
-			InputData: "React Native app structure",
-			ErrorMsg:  "Invalid input format",
+			UserID:      userID.(uint),
+			Title:       "Report Generation",
+			Description: "Generating monthly reports",
+			Status:      "failed",
+			JobType:     "report-generation",
+			Progress:    25,
+			ErrorMsg:    "Invalid input format",
 		},
 	}
 

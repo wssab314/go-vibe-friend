@@ -7,7 +7,6 @@ import (
 	"go-vibe-friend/internal/api/middleware"
 	"go-vibe-friend/internal/api/vf"
 	"go-vibe-friend/internal/config"
-	"go-vibe-friend/internal/llm"
 	"go-vibe-friend/internal/service"
 	"go-vibe-friend/internal/store"
 
@@ -15,7 +14,7 @@ import (
 	"github.com/minio/minio-go/v7"
 )
 
-func SetupRouter(db *store.Database, cfg *config.Config, minioClient *minio.Client) *gin.Engine {
+func SetupRouter(storeManager *store.Store, cfg *config.Config, minioClient *minio.Client) *gin.Engine {
 	r := gin.New()
 
 	// Middleware
@@ -23,32 +22,25 @@ func SetupRouter(db *store.Database, cfg *config.Config, minioClient *minio.Clie
 	r.Use(gin.Recovery())
 	r.Use(middleware.CORS())
 
-	// Initialize stores and services
-	userStore := store.NewUserStore(db)
-	jobStore := store.NewJobStore(db)
-	sessionStore := store.NewSessionStore(db)
-	profileStore := store.NewProfileStore(db)
-	fileStore := store.NewFileStore(db)
-	emailStore := store.NewEmailStore(db)
-	permissionStore := store.NewPermissionStore(db)
-	authService := service.NewAuthService(userStore, sessionStore)
-	profileService := service.NewProfileService(userStore, profileStore)
-	fileService := service.NewFileService(fileStore, minioClient, cfg)
-	emailService := service.NewEmailService(emailStore, "", "", "", "", "", "")
-	permissionService := service.NewPermissionService(permissionStore, userStore)
-	llmService := llm.NewService(cfg, jobStore, userStore)
+	// Initialize stores and services using Store manager
+	authService := service.NewAuthService(storeManager.User, storeManager.GetSessionStore())
+	profileService := service.NewProfileService(storeManager.User, storeManager.Profile)
+	fileService := service.NewFileService(storeManager.File, minioClient, cfg)
+	emailService := service.NewEmailService(storeManager.Email, "", "", "", "", "", "")
+	permissionService := service.NewPermissionService(storeManager.Permission, storeManager.User)
+	redisService := service.NewRedisService(storeManager)
 	
 	// Initialize handlers
 	adminAuthHandler := admin.NewAuthHandler(authService)
-	userHandler := admin.NewUserHandler(userStore)
-	jobHandler := admin.NewJobHandler(jobStore)
-	dashboardHandler := admin.NewDashboardHandler(userStore, jobStore, db.DB)
-	llmHandler := admin.NewLLMHandler(llmService)
+	userHandler := admin.NewUserHandler(storeManager.User)
+	jobHandler := admin.NewJobHandler(storeManager.Job)
+	dashboardHandler := admin.NewDashboardHandler(storeManager.User, storeManager.Job, storeManager.DB.DB)
 	permissionHandler := admin.NewPermissionHandler(permissionService)
-	exportService := service.NewExportService(userStore, jobStore, fileStore, emailStore, permissionStore)
+	exportService := service.NewExportService(storeManager.User, storeManager.Job, storeManager.File, storeManager.Email, storeManager.Permission)
 	exportHandler := admin.NewExportHandler(exportService)
 	storageService := service.NewStorageService(minioClient, cfg)
 	storageHandler := admin.NewStorageHandler(storageService)
+	redisHandler := admin.NewRedisHandler(redisService)
 	
 	// VF handlers
 	vfAuthHandler := vf.NewAuthHandler(authService)
@@ -104,12 +96,6 @@ func SetupRouter(db *store.Database, cfg *config.Config, minioClient *minio.Clie
 				protected.DELETE("/jobs/:id", jobHandler.DeleteJob)
 				protected.POST("/jobs/sample", jobHandler.CreateSampleJobs)
 				
-				// LLM services
-				protected.GET("/llm/config", llmHandler.GetConfig)
-				protected.POST("/llm/test", llmHandler.TestConnection)
-				protected.POST("/llm/generate", llmHandler.GenerateCode)
-				protected.POST("/llm/simple", llmHandler.SimpleGenerate)
-				protected.GET("/llm/jobs/:id", llmHandler.GetJobStatus)
 				
 				// Permission management
 				protected.GET("/permissions", permissionHandler.GetPermissions)
@@ -146,6 +132,18 @@ func SetupRouter(db *store.Database, cfg *config.Config, minioClient *minio.Clie
 				// Storage management
 				protected.GET("/storage/objects", storageHandler.ListStorageObjects)
 				protected.GET("/storage/objects/download/*objectKey", storageHandler.DownloadStorageObject)
+				
+				// Redis management
+				protected.GET("/redis/info", redisHandler.GetRedisInfo)
+				protected.GET("/redis/keys", redisHandler.GetKeys)
+				protected.POST("/redis/keys/get", redisHandler.GetKeyValue)  // 使用POST传递key名
+				protected.POST("/redis/keys/delete", redisHandler.DeleteKey) // 使用POST传递key名
+				protected.POST("/redis/keys/ttl", redisHandler.SetKeyTTL)    // 使用POST传递key和TTL
+				protected.POST("/redis/test", redisHandler.TestConnection)
+				protected.POST("/redis/command", redisHandler.ExecuteCommand)
+				protected.POST("/redis/flush", redisHandler.FlushDB)
+				protected.GET("/redis/app-keys", redisHandler.GetApplicationKeys)
+				
 				
 			// Public file access (for image preview)
 			adminGroup.GET("/storage/preview/*objectKey", storageHandler.DownloadStorageObject)

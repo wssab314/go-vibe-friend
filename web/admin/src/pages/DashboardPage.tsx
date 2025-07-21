@@ -35,25 +35,12 @@ const DashboardPage: React.FC = () => {
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>LLM Generate</CardTitle>
-            <CardDescription>
-              Generate backend code from frontend uploads
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-gray-600">
-              Upload your frontend code and let AI generate the backend API and database models.
-            </p>
-          </CardContent>
-        </Card>
 
         <Card>
           <CardHeader>
             <CardTitle>Recent Activity</CardTitle>
             <CardDescription>
-              Your recent generation jobs
+              Your recent system activities
             </CardDescription>
           </CardHeader>
           <CardContent>

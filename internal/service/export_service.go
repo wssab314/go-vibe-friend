@@ -225,7 +225,7 @@ func (s *ExportService) exportJobs(filePath string, req *ExportRequest) (int, er
 }
 
 // exportJobsCSV 导出任务CSV
-func (s *ExportService) exportJobsCSV(filePath string, jobs []models.GenerationJob) (int, error) {
+func (s *ExportService) exportJobsCSV(filePath string, jobs []models.Job) (int, error) {
 	file, err := os.Create(filePath)
 	if err != nil {
 		return 0, err
@@ -246,7 +246,7 @@ func (s *ExportService) exportJobsCSV(filePath string, jobs []models.GenerationJ
 		record := []string{
 			strconv.Itoa(int(job.ID)),
 			strconv.Itoa(int(job.UserID)),
-			job.Status,
+			string(job.Status),
 			job.JobType,
 			job.CreatedAt.Format("2006-01-02 15:04:05"),
 			job.UpdatedAt.Format("2006-01-02 15:04:05"),
@@ -260,7 +260,7 @@ func (s *ExportService) exportJobsCSV(filePath string, jobs []models.GenerationJ
 }
 
 // exportJobsJSON 导出任务JSON
-func (s *ExportService) exportJobsJSON(filePath string, jobs []models.GenerationJob) (int, error) {
+func (s *ExportService) exportJobsJSON(filePath string, jobs []models.Job) (int, error) {
 	file, err := os.Create(filePath)
 	if err != nil {
 		return 0, err

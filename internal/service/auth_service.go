@@ -12,10 +12,10 @@ import (
 
 type AuthService struct {
 	userStore    *store.UserStore
-	sessionStore *store.SessionStore
+	sessionStore store.SessionStoreInterface
 }
 
-func NewAuthService(userStore *store.UserStore, sessionStore *store.SessionStore) *AuthService {
+func NewAuthService(userStore *store.UserStore, sessionStore store.SessionStoreInterface) *AuthService {
 	return &AuthService{
 		userStore:    userStore,
 		sessionStore: sessionStore,

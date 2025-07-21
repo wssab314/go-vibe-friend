@@ -3,6 +3,7 @@ package config
 import (
 	"fmt"
 	"log"
+	"time"
 
 	"github.com/spf13/viper"
 )
@@ -10,8 +11,7 @@ import (
 type Config struct {
 	Server   ServerConfig   `mapstructure:"server"`
 	Database DatabaseConfig `mapstructure:"database"`
-	OpenAI   OpenAIConfig   `mapstructure:"openai"`
-	Gemini   GeminiConfig   `mapstructure:"gemini"`
+	Redis    RedisConfig    `mapstructure:"redis"`
 	MinIO    MinIOConfig    `mapstructure:"minio"`
 }
 
@@ -31,14 +31,15 @@ type DatabaseConfig struct {
 	SSLMode  string `mapstructure:"sslmode"`
 }
 
-type OpenAIConfig struct {
-	APIKey  string `mapstructure:"api_key"`
-	BaseURL string `mapstructure:"base_url"`
-}
 
-type GeminiConfig struct {
-	APIKey  string `mapstructure:"api_key"`
-	BaseURL string `mapstructure:"base_url"`
+type RedisConfig struct {
+	Host        string        `mapstructure:"host"`
+	Port        int           `mapstructure:"port"`
+	Password    string        `mapstructure:"password"`
+	DB          int           `mapstructure:"db"`
+	PoolSize    int           `mapstructure:"pool_size"`
+	SessionTTL  time.Duration `mapstructure:"session_ttl"`
+	CacheTTL    time.Duration `mapstructure:"cache_ttl"`
 }
 
 type MinIOConfig struct {
@@ -66,8 +67,13 @@ func Load() (*Config, error) {
 	viper.SetDefault("database.password", "postgres")
 	viper.SetDefault("database.name", "go_vibe_friend")
 	viper.SetDefault("database.sslmode", "disable")
-	viper.SetDefault("openai.base_url", "https://api.openai.com/v1")
-	viper.SetDefault("gemini.base_url", "https://generativelanguage.googleapis.com/v1beta")
+	viper.SetDefault("redis.host", "localhost")
+	viper.SetDefault("redis.port", 6379)
+	viper.SetDefault("redis.password", "")
+	viper.SetDefault("redis.db", 0)
+	viper.SetDefault("redis.pool_size", 10)
+	viper.SetDefault("redis.session_ttl", "24h")
+	viper.SetDefault("redis.cache_ttl", "1h")
 	viper.SetDefault("minio.endpoint", "localhost:9000")
 	viper.SetDefault("minio.access_key_id", "minioadmin")
 	viper.SetDefault("minio.secret_access_key", "minioadmin123")
@@ -94,10 +100,13 @@ func Load() (*Config, error) {
 	viper.BindEnv("database.password", "DB_PASSWORD")
 	viper.BindEnv("database.name", "DB_NAME")
 	viper.BindEnv("database.sslmode", "DB_SSLMODE")
-	viper.BindEnv("openai.api_key", "OPENAI_API_KEY")
-	viper.BindEnv("openai.base_url", "OPENAI_BASE_URL")
-	viper.BindEnv("gemini.api_key", "GEMINI_API_KEY")
-	viper.BindEnv("gemini.base_url", "GEMINI_BASE_URL")
+	viper.BindEnv("redis.host", "REDIS_HOST")
+	viper.BindEnv("redis.port", "REDIS_PORT")
+	viper.BindEnv("redis.password", "REDIS_PASSWORD")
+	viper.BindEnv("redis.db", "REDIS_DB")
+	viper.BindEnv("redis.pool_size", "REDIS_POOL_SIZE")
+	viper.BindEnv("redis.session_ttl", "REDIS_SESSION_TTL")
+	viper.BindEnv("redis.cache_ttl", "REDIS_CACHE_TTL")
 	viper.BindEnv("minio.endpoint", "MINIO_ENDPOINT")
 	viper.BindEnv("minio.access_key_id", "MINIO_ACCESS_KEY_ID")
 	viper.BindEnv("minio.secret_access_key", "MINIO_SECRET_ACCESS_KEY")

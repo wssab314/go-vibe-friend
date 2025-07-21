@@ -22,8 +22,8 @@ const APITestInterfacePage: React.FC = () => {
   const [responseTime, setResponseTime] = useState<number | null>(null);
   const [userToken, setUserToken] = useState('');
   const [adminToken, setAdminToken] = useState('');
-  const [testUserInfo, setTestUserInfo] = useState<any>(null);
-  const [testHistory, setTestHistory] = useState<any[]>([]);
+  const [, setTestUserInfo] = useState<any>(null);
+  const [, setTestHistory] = useState<any[]>([]);
   const [collapsedCategories, setCollapsedCategories] = useState<Set<string>>(new Set());
 
   // 定义API接口分类
@@ -150,37 +150,6 @@ const APITestInterfacePage: React.FC = () => {
               description: '删除指定任务',
               needsAuth: true,
               authType: 'admin'
-            }
-          ]
-        },
-        llm: {
-          name: 'LLM管理',
-          icon: '🤖',
-          endpoints: [
-            {
-              name: '获取LLM配置',
-              method: 'GET',
-              path: '/api/admin/llm/config',
-              description: '获取LLM配置状态',
-              needsAuth: true,
-              authType: 'admin'
-            },
-            {
-              name: '测试LLM连接',
-              method: 'POST',
-              path: '/api/admin/llm/test',
-              description: '测试LLM API连接',
-              needsAuth: true,
-              authType: 'admin'
-            },
-            {
-              name: '简单代码生成',
-              method: 'POST',
-              path: '/api/admin/llm/simple',
-              description: '简单的代码生成测试',
-              needsAuth: true,
-              authType: 'admin',
-              body: { prompt: 'Create a Go struct for a User with ID, Name, Email fields' }
             }
           ]
         },

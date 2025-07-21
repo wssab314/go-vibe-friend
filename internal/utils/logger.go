@@ -23,6 +23,10 @@ func (l *Logger) Error(msg string) {
 	l.Printf("[ERROR] %s", msg)
 }
 
+func (l *Logger) Warn(msg string) {
+	l.Printf("[WARN] %s", msg)
+}
+
 func (l *Logger) Debug(msg string) {
 	l.Printf("[DEBUG] %s", msg)
 }

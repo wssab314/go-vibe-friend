@@ -179,7 +179,7 @@ func (h *DashboardHandler) GetStats(c *gin.Context) {
 			ID:        job.ID,
 			UserID:    job.UserID,
 			Username:  username,
-			Status:    job.Status,
+			Status:    string(job.Status),
 			JobType:   job.JobType,
 			CreatedAt: job.CreatedAt,
 		}

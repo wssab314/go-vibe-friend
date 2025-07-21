@@ -6,7 +6,6 @@ import DashboardOverviewPage from './pages/DashboardOverviewPage';
 import UserManagementPage from './pages/UserManagementPage';
 import JobsManagementPage from './pages/JobsManagementPage';
 import DataExplorerPage from './pages/DataExplorerPage';
-import LLMInterfacePage from './pages/LLMInterfacePage';
 import APITestInterfacePage from './pages/APITestInterfacePage';
 import PermissionsManagementPage from './pages/PermissionsManagementPage';
 import MinioTestPage from './pages/MinioTestPage';
@@ -35,8 +34,6 @@ const AppContent: React.FC = () => {
         return <JobsManagementPage />;
       case 'data-explorer':
         return <DataExplorerPage />;
-      case 'llm':
-        return <LLMInterfacePage />;
       case 'api-test':
         return <APITestInterfacePage />;
       case 'permissions':

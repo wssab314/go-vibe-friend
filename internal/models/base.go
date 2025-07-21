@@ -65,16 +65,6 @@ type Session struct {
 	IPAddress    string    `json:"ip_address" gorm:"size:45"`
 }
 
-// GenerationJob 生成任务表
-type GenerationJob struct {
-	BaseModel
-	UserID      uint   `json:"user_id" gorm:"not null"`
-	Status      string `json:"status" gorm:"default:pending"`
-	InputData   string `json:"input_data" gorm:"type:text"`
-	OutputData  string `json:"output_data" gorm:"type:text"`
-	ErrorMsg    string `json:"error_msg,omitempty" gorm:"type:text"`
-	JobType     string `json:"job_type" gorm:"not null"`
-}
 
 // AuditLog 审计日志表
 type AuditLog struct {
@@ -93,4 +83,17 @@ type Setting struct {
 	Key         string `json:"key" gorm:"uniqueIndex;not null"`
 	Value       string `json:"value" gorm:"type:text"`
 	Description string `json:"description" gorm:"type:text"`
+}
+
+// Job 任务表
+type Job struct {
+	BaseModel
+	UserID      uint   `json:"user_id" gorm:"not null"`
+	Title       string `json:"title" gorm:"not null"`
+	Description string `json:"description" gorm:"type:text"`
+	Status      string `json:"status" gorm:"default:pending"` // pending, running, completed, failed
+	JobType     string `json:"job_type" gorm:"not null"`
+	Progress    int    `json:"progress" gorm:"default:0"`
+	Result      string `json:"result" gorm:"type:text"`
+	ErrorMsg    string `json:"error_msg" gorm:"type:text"`
 }

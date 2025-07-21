@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import Button from '../components/ui/Button';
-import { Card } from '../components/ui/Card';
+import { Button } from '../components/ui/Button';
 
 interface MinioObject {
   key: string;
@@ -10,19 +9,6 @@ interface MinioObject {
   url: string;
 }
 
-interface FileUploadResult {
-  code: number;
-  message: string;
-  data?: {
-    file_id: number;
-    file_name: string;
-    original_name: string;
-    file_size: number;
-    category: string;
-    mime_type: string;
-    created_at: string;
-  };
-}
 
 interface FileItem {
   key: string;
@@ -41,12 +27,6 @@ const FolderIcon = ({ className = "w-5 h-5" }: { className?: string }) => (
   </svg>
 );
 
-const FolderOpenIcon = ({ className = "w-5 h-5" }: { className?: string }) => (
-  <svg className={`${className} text-blue-600`} fill="currentColor" viewBox="0 0 20 20">
-    <path fillRule="evenodd" d="M2 6a2 2 0 012-2h4l2 2h4a2 2 0 012 2v1H8a3 3 0 00-3 3v1.5a1.5 1.5 0 01-3 0V6z" clipRule="evenodd" />
-    <path d="M6 12a2 2 0 012-2h8a2 2 0 012 2v2a2 2 0 01-2 2H2h2a2 2 0 002-2v-2z" />
-  </svg>
-);
 
 const FileIcon = ({ contentType, className = "w-5 h-5" }: { contentType: string; className?: string }) => {
   if (contentType?.includes('image')) {
